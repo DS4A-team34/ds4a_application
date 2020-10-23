@@ -1,0 +1,16 @@
+# editor
+__pycache__
+.vscode
+
+# notebooks
+-ipynb_checkpoints
+
+# environment stuff
+venv
+venv_linux
+.env
+
+# huge data
+SECOP_I_Contratos.csv
+data/contracts
+.ipynb_checkpoints/Untitled-checkpoint.ipynb
