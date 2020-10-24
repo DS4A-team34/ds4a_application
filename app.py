@@ -17,7 +17,7 @@ from sqlalchemy import create_engine
 
 import settings
 from components import filters, header, indicators, table
-from controls import df, df_small
+from controls import df, df_small, DB, db2, DB3
 from layouts import data, graphs
 
 # get relative data folder
@@ -50,6 +50,7 @@ layout = dict(
     ),
 )
 
+
 # Create app layout
 app.layout = html.Div(
     [
@@ -71,6 +72,33 @@ app.layout = html.Div(
             [
                 html.Div(
                     [dcc.Graph(id="tipo_proceso_graph")],
+                    className="pretty_container seven columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="municipio_estado_graph", figure=px.treemap(DB, path=['municipioentrega','procesoestatus'], values='count'))],
+                    className="pretty_container seven columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="municipio_estado_graph", figure=px.treemap(DB, path=['municipioentrega','procesoestatus'], values='count'))],
+                    className="pretty_container seven columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="municipio_estado_graph", figure=px.treemap(DB, path=['municipioentrega','procesoestatus'], values='count'))],
                     className="pretty_container seven columns",
                 ),
             ],
