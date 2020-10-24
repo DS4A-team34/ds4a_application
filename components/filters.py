@@ -1,7 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 
-from controls import df, grupo_options, grupo_dict
+from controls import df, grupo_options, grupo_dict, estado_proceso_dict, estado_proceso_options
 
 component = html.Div(
     [
@@ -15,6 +15,14 @@ component = html.Div(
             min=df['Anno Cargue SECOP'].min(),
             max=df['Anno Cargue SECOP'].max(),
             value=[2018, 2019],
+            className="dcc_control",
+        ),
+        html.P("Filtrar por estado del proceso:", className="control_label"),
+        dcc.Dropdown(
+            id="estado_proceso_dropdown",
+            options=estado_proceso_options,
+            multi=True,
+            value=list(estado_proceso_dict.keys()),
             className="dcc_control",
         ),
         html.P("Filtrar por grupo:", className="control_label"),

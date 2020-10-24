@@ -110,11 +110,12 @@ def update_content(value):
     return graphs.layout
 
 
-def filter_dataframe(df, year_slider: list, grupo_dropdown: list) -> pd.DataFrame:
+def filter_dataframe(df, year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list) -> pd.DataFrame:
     dff = df[
         df["Anno Cargue SECOP"].isin(year_slider)
         & df["ID Grupo"].isin(grupo_dropdown)
-    ]
+        & df["Estado del Proceso"].isin(estado_proceso_dropdown)
+    ].copy()
     return dff
 
 
@@ -122,50 +123,69 @@ def filter_dataframe(df, year_slider: list, grupo_dropdown: list) -> pd.DataFram
     Output('amnt-inconsistencies-text', 'children'),
     [
         Input('year_slider', 'value'),
-        Input('grupo_dropdown', 'value')
+        Input('grupo_dropdown', 'value'),
+        Input('estado_proceso_dropdown', 'value'),
     ]
 )
-def update_amnt_inconsistencies(year_slider: list, grupo_dropdown: list):
+def update_amnt_inconsistencies(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(df, year_slider, grupo_dropdown)
-    return random.randint(1, 10000)
+    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    return random.randint(0, len(dff) / 2)
 
 
 @app.callback(
     Output('pct-inconsistencies-text', 'children'),
     [
         Input('year_slider', 'value'),
-        Input('grupo_dropdown', 'value')
+        Input('grupo_dropdown', 'value'),
+        Input('estado_proceso_dropdown', 'value'),
     ]
 )
-def update_pct_inconsistencies(year_slider: list, grupo_dropdown: list):
+def update_pct_inconsistencies(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(df, year_slider, grupo_dropdown)
-    return f'{random.randint(1, 100)}%'
+    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    return f'{random.randint(0, 100)}%'
 
 
 @app.callback(
     Output('avg-severity-text', 'children'),
     [
         Input('year_slider', 'value'),
-        Input('grupo_dropdown', 'value')
+        Input('grupo_dropdown', 'value'),
+        Input('estado_proceso_dropdown', 'value'),
     ]
 )
-def update_avg_severity(year_slider: list, grupo_dropdown: list):
+def update_avg_severity(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(df, year_slider, grupo_dropdown)
-    return random.randint(1, 5)
+    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    return random.randint(0, 5)
+
+
+@app.callback(
+    Output('count-reviewed-text', 'children'),
+    [
+        Input('year_slider', 'value'),
+        Input('grupo_dropdown', 'value'),
+        Input('estado_proceso_dropdown', 'value'),
+    ]
+)
+def update_count_reviewed(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
+    import random
+    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    count_reviewed = random.randint(1, len(dff))
+    return f'{count_reviewed}/{len(dff)}'
 
 
 @app.callback(
     Output('tipo_proceso_graph', 'figure'),
     [
         Input('year_slider', 'value'),
-        Input('grupo_dropdown', 'value')
+        Input('grupo_dropdown', 'value'),
+        Input('estado_proceso_dropdown', 'value'),
     ]
 )
-def update_tipo_proceso_graph(year_slider: list, grupo_dropdown: list):
-    dff = filter_dataframe(df, year_slider, grupo_dropdown)
+def update_tipo_proceso_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
+    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
 
     graph_df = dff.groupby(['ID Tipo de Proceso'])['UID'].count(
     ).reset_index().rename(columns={'UID': 'count'})

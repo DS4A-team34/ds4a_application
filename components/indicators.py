@@ -16,8 +16,13 @@ component = html.Div(
                     className="mini_container",
                 ),
                 html.Div(
-                    [html.H6(id="avg-severity-text"), html.P("Severidad Promedio")],
+                    [html.H6(id="avg-severity-text"), html.P("Severidad promedio")],
                     id="avg-severity",
+                    className="mini_container",
+                ),
+                html.Div(
+                    [html.H6(id="count-reviewed-text"), html.P("Procesos revisados")],
+                    id="count-reviewed",
                     className="mini_container",
                 ),
             ],
