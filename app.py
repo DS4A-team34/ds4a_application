@@ -17,7 +17,7 @@ from sqlalchemy import create_engine
 
 import settings
 from components import filters, header, indicators, table
-from controls import df, df_small, DB, db2, DB3
+from controls import df, df_small, DB, db2, DB3, plot_grf, min_graf
 from layouts import data, graphs
 
 # get relative data folder
@@ -89,7 +89,7 @@ app.layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="municipio_estado_graph", figure=px.treemap(DB, path=['municipioentrega','procesoestatus'], values='count'))],
+                    [dcc.Graph(id="count_contratos_graph", figure=plot_grf)],
                     className="pretty_container seven columns",
                 ),
             ],
@@ -98,7 +98,7 @@ app.layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="municipio_estado_graph", figure=px.treemap(DB, path=['municipioentrega','procesoestatus'], values='count'))],
+                    [dcc.Graph(id="grupos_contratos_grapsh", figure=min_graf)],
                     className="pretty_container seven columns",
                 ),
             ],

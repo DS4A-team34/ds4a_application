@@ -1,5 +1,6 @@
 import pandas as pd
 from sqlalchemy import create_engine
+import plotly.express as px
 
 import settings
 
@@ -47,6 +48,10 @@ group by fechacargasecop
  ''', engine.connect())
 
 
+plot_grf=px.line(db2,x="fechacargasecop",y="count", title='Contratos cargados en SECOP por año',
+        labels={'count':'Cantidad','fechacargasecop':'Año'})
+
+
 DB3=pd.read_sql(
 '''
 SELECT annosecop,A.grupoid, nombregrupo, count(A.grupoid) FROM secop1general C
@@ -55,3 +60,8 @@ group by annosecop,nombregrupo, A.grupoid
 HAVING count(A.grupoid) > 10000
 ORDER BY count(A.grupoid) DESC
  ''', engine.connect())
+
+
+min_graf= px.bar(DB3, y="count",x="annosecop", color='nombregrupo',
+       title='Grupos mas frecuentes por año',
+       labels={'count':'Cantidad','annosecop':'Año'}).update_layout(legend_title_text='Nombre Grupo')
