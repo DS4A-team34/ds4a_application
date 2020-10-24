@@ -3,8 +3,13 @@ import pandas as pd
 # TODO: connect to database, reading from csv by the moment
 df = pd.read_csv('data/SECOP_I_Contratos.csv', nrows = 10000)
 
+# define dict and options for "grupo"
 grupo_dict = dict(zip(df['ID Grupo'].unique(), df['Nombre Grupo'].unique()))
 grupo_options = [{"label": v, "value": k} for k, v in grupo_dict.items()]
+
+estado_proceso_dict = {i: e for i, e in sorted(enumerate(df['Estado del Proceso'].unique()))}
+print(estado_proceso_dict)
+# TODO: add options
 
 columns_small = [
     'UID', 'Anno Cargue SECOP', 'Anno Firma del Contrato', 'Fecha de Cargue en el SECOP',

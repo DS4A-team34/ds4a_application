@@ -11,10 +11,11 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
+import plotly.express as px
 from dash.dependencies import ClientsideFunction, Input, Output, State
 from sqlalchemy import create_engine
 
-from components import header, table, filters
+from components import filters, header, indicators, table
 from controls import df, df_small
 from layouts import data, graphs
 
@@ -58,24 +59,49 @@ app.layout = html.Div(
         # header
         header.component,
 
-        dcc.Tabs(id='tabs-control', value='graphs', children=[
-            dcc.Tab(label='Graphs', value='graphs'),
-            dcc.Tab(label='Data', value='data'),
-        ]),
+        html.Div(
+            [
+                filters.component,
+                indicators.component,
+            ],
+            className="row flex-display",
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="tipo_proceso_graph")],
+                    className="pretty_container seven columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
+
+        # dcc.Tabs(id='tabs-control', value='graphs', children=[
+        #     dcc.Tab(label='Graphs', value='graphs'),
+        #     dcc.Tab(label='Data', value='data'),
+        # ]),
 
         # content will be rendered in this element
-        html.Div(id='tab-content')
+        # html.Div(id='tab-content')
 
     ],
     id="mainContainer",
     style={"display": "flex", "flex-direction": "column"},
 )
 
-
-@app.callback(
-    Output('tab-content', 'children'),
-    [Input('tabs-control', 'value')]
+# Create callbacks
+app.clientside_callback(
+    ClientsideFunction(namespace="clientside", function_name="resize"),
+    Output("output-clientside", "children"),
+    [Input("count_graph", "figure")],
 )
+
+# @app.callback(
+#     Output('tab-content', 'children'),
+#     [Input('tabs-control', 'value')]
+# )
+
+
 def update_content(value):
     if value == 'data':
         return data.layout
@@ -83,20 +109,71 @@ def update_content(value):
     return graphs.layout
 
 
+def filter_dataframe(df, year_slider: list, grupo_dropdown: list) -> pd.DataFrame:
+    dff = df[
+        df["Anno Cargue SECOP"].isin(year_slider)
+        & df["ID Grupo"].isin(grupo_dropdown)
+    ]
+    return dff
+
+
 @app.callback(
     Output('amnt-inconsistencies-text', 'children'),
     [
-        Input('cross-filter-options', 'year_slider'),
-        Input('cross-filter-options', 'grupo_dropdown')
+        Input('year_slider', 'value'),
+        Input('grupo_dropdown', 'value')
     ]
 )
-def update_amnt_inconsistencies(year_slider, grupo_dropdown):
+def update_amnt_inconsistencies(year_slider: list, grupo_dropdown: list):
     import random
-
-    print(year_slider)
-    print(grupo_dropdown)
-    
+    dff = filter_dataframe(df, year_slider, grupo_dropdown)
     return random.randint(1, 10000)
+
+
+@app.callback(
+    Output('pct-inconsistencies-text', 'children'),
+    [
+        Input('year_slider', 'value'),
+        Input('grupo_dropdown', 'value')
+    ]
+)
+def update_pct_inconsistencies(year_slider: list, grupo_dropdown: list):
+    import random
+    dff = filter_dataframe(df, year_slider, grupo_dropdown)
+    return f'{random.randint(1, 100)}%'
+
+
+@app.callback(
+    Output('avg-severity-text', 'children'),
+    [
+        Input('year_slider', 'value'),
+        Input('grupo_dropdown', 'value')
+    ]
+)
+def update_avg_severity(year_slider: list, grupo_dropdown: list):
+    import random
+    dff = filter_dataframe(df, year_slider, grupo_dropdown)
+    return random.randint(1, 5)
+
+
+@app.callback(
+    Output('tipo_proceso_graph', 'figure'),
+    [
+        Input('year_slider', 'value'),
+        Input('grupo_dropdown', 'value')
+    ]
+)
+def update_tipo_proceso_graph(year_slider: list, grupo_dropdown: list):
+    dff = filter_dataframe(df, year_slider, grupo_dropdown)
+
+    graph_df = dff.groupby(['ID Tipo de Proceso'])['UID'].count(
+    ).reset_index().rename(columns={'UID': 'count'})
+    graph_df.sort_values('count', ascending=False, inplace=True)
+    graph_df = graph_df.head(5)
+
+    fig = px.bar(graph_df, x='ID Tipo de Proceso', y='count')
+
+    return fig
 
 
 # Main
