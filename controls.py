@@ -1,7 +1,8 @@
 import pandas as pd
 
 # TODO: connect to database, reading from csv by the moment
-df = pd.read_csv('data/SECOP_I_Contratos.csv', nrows = 10000)
+# df = pd.read_csv('data/SECOP_I_Contratos.csv', nrows = 10000)
+df = pd.read_csv('data/reduced_data.csv')
 
 # define dict and options for "grupo"
 grupo_dict = dict(zip(df['ID Grupo'].unique(), df['Nombre Grupo'].unique()))

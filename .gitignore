@@ -14,4 +14,4 @@ venv_linux
 # huge data
 SECOP_I_Contratos.csv
 data/contracts
-.ipynb_checkpoints/Untitled-checkpoint.ipynb
+data/reduced_data.csv
