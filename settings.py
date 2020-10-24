@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+DEBUG = os.getenv('DEBUG')
 
 DATABASE = {
     'USER': os.getenv('DATABASE_USER'),

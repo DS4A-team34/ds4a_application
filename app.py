@@ -15,6 +15,7 @@ import plotly.express as px
 from dash.dependencies import ClientsideFunction, Input, Output, State
 from sqlalchemy import create_engine
 
+import settings
 from components import filters, header, indicators, table
 from controls import df, df_small
 from layouts import data, graphs
@@ -178,4 +179,4 @@ def update_tipo_proceso_graph(year_slider: list, grupo_dropdown: list):
 
 # Main
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(host='0.0.0.0', debug=settings.DEBUG)

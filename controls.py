@@ -9,7 +9,7 @@ grupo_dict = dict(zip(df['ID Grupo'].unique(), df['Nombre Grupo'].unique()))
 grupo_options = [{"label": v, "value": k} for k, v in grupo_dict.items()]
 
 estado_proceso_dict = {i: e for i, e in sorted(enumerate(df['Estado del Proceso'].unique()))}
-print(estado_proceso_dict)
+# print(estado_proceso_dict)
 # TODO: add options
 
 columns_small = [
