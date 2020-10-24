@@ -8,6 +8,7 @@ import pickle
 import urllib.request
 
 import dash
+import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
@@ -17,7 +18,7 @@ from sqlalchemy import create_engine
 
 import settings
 from components import filters, header, indicators, table
-from controls import df, df_small, DB, db2, DB3, plot_grf, min_graf
+from controls import df, df_small, DB, db2, DB3, plot_grf, min_graf, tipo_proceso_dict
 from layouts import data, graphs
 
 # get relative data folder
@@ -71,26 +72,8 @@ app.layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="tipo_proceso_graph")],
-                    className="pretty_container seven columns",
-                ),
-            ],
-            className="row flex-display",
-        ),
-        html.Div(
-            [
-                html.Div(
-                    [dcc.Graph(id="municipio_estado_graph", figure=px.treemap(DB, path=['municipioentrega','procesoestatus'], values='count'))],
-                    className="pretty_container seven columns",
-                ),
-            ],
-            className="row flex-display",
-        ),
-        html.Div(
-            [
-                html.Div(
                     [dcc.Graph(id="count_contratos_graph", figure=plot_grf)],
-                    className="pretty_container seven columns",
+                    className="pretty_container twelve columns",
                 ),
             ],
             className="row flex-display",
@@ -101,6 +84,24 @@ app.layout = html.Div(
                     [dcc.Graph(id="grupos_contratos_grapsh", figure=min_graf)],
                     className="pretty_container seven columns",
                 ),
+            ],
+            className="row flex-display",
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="tipo_proceso_graph")],
+                    className="pretty_container seven columns",
+                ),
+                # html.Div(
+                #     [
+                #         dash_table.DataTable(
+                #             id='tipo-proceso-table',
+                #             columns=['ID', 'Tipo de Proceso'],
+                #         )
+                #     ],
+                #     className="pretty_container five columns",
+                # )
             ],
             className="row flex-display",
         ),
@@ -205,7 +206,10 @@ def update_count_reviewed(year_slider: list, grupo_dropdown: list, estado_proces
 
 
 @app.callback(
-    Output('tipo_proceso_graph', 'figure'),
+    [
+        Output('tipo_proceso_graph', 'figure'),
+        Output('tipo-proceso-table', 'data')
+    ],
     [
         Input('year_slider', 'value'),
         Input('grupo_dropdown', 'value'),
@@ -220,11 +224,25 @@ def update_tipo_proceso_graph(year_slider: list, grupo_dropdown: list, estado_pr
     graph_df.sort_values('count', ascending=False, inplace=True)
     graph_df = graph_df.head(5)
 
+    # TODO: add table
+    # data = {p: tipo_proceso_dict[p] for p in graph_df['ID Tipo de Proceso']}
+
     fig = px.bar(graph_df, x='ID Tipo de Proceso', y='count')
 
-    return fig
+    return fig, data
+
+@app.callback(
+    Output('count_graph', 'figure'),
+    [
+        Input('year_slider', 'value'),
+        Input('grupo_dropdown', 'value'),
+        Input('estado_proceso_dropdown', 'value'),
+    ]
+)
+def update_municipio_estado_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
+    return px.treemap(DB, path=['municipioentrega','procesoestatus'], values='count')
 
 
 # Main
 if __name__ == "__main__":
-    app.run_server(host='0.0.0.0', debug=settings.DEBUG)
+    app.run_server(host=settings.HOST, debug=settings.DEBUG)

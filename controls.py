@@ -16,6 +16,9 @@ estado_proceso_dict = {e: e for e in sorted(df['Estado del Proceso'].unique())}
 estado_proceso_options = [{"label": v, "value": k}
                           for k, v in estado_proceso_dict.items()]
 
+tipo_proceso_dict = dict(zip(df['ID Tipo de Proceso'].unique(), df['Tipo de Proceso'].unique()))
+tipo_proceso_options = [{"label": v, "value": k} for k, v in tipo_proceso_dict.items()]
+
 columns_small = [
     'UID', 'Anno Cargue SECOP', 'Anno Firma del Contrato', 'Fecha de Cargue en el SECOP',
     'Nivel Entidad', 'Nombre de la Entidad', 'NIT de la Entidad',

@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DEBUG = os.getenv('DEBUG')
+HOST = os.getenv('HOST')
 
 DATABASE = {
     'USER': os.getenv('DATABASE_USER'),
