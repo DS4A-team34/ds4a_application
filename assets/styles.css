@@ -73,6 +73,7 @@ body {
 #countGraphContainer {
   flex: 5;
   position: relative;
+  min-height: 400px;
 }
 
 #header {

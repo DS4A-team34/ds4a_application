@@ -14,7 +14,7 @@ component = html.Div(
             id="year_slider",
             min=df['Anno Cargue SECOP'].min(),
             max=df['Anno Cargue SECOP'].max(),
-            value=[2018, 2019],
+            value=[2018, 2020],
             className="dcc_control",
         ),
         html.P("Filtrar por estado del proceso:", className="control_label"),

@@ -8,18 +8,18 @@ import pickle
 import urllib.request
 
 import dash
-import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_table
 import pandas as pd
 import plotly.express as px
 from dash.dependencies import ClientsideFunction, Input, Output, State
 from sqlalchemy import create_engine
 
 import settings
-from components import filters, header, indicators, table
-from controls import df, df_small, DB, db2, DB3, plot_grf, min_graf, tipo_proceso_dict
-from layouts import data, graphs
+from components import header
+from controls import DB, DB3, db2, df, tipo_proceso_dict
+from layouts import data, files, graphs
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
@@ -62,57 +62,13 @@ app.layout = html.Div(
         # header
         header.component,
 
-        html.Div(
-            [
-                filters.component,
-                indicators.component,
-            ],
-            className="row flex-display",
-        ),
-        html.Div(
-            [
-                html.Div(
-                    [dcc.Graph(id="count_contratos_graph", figure=plot_grf)],
-                    className="pretty_container twelve columns",
-                ),
-            ],
-            className="row flex-display",
-        ),
-        html.Div(
-            [
-                html.Div(
-                    [dcc.Graph(id="grupos_contratos_grapsh", figure=min_graf)],
-                    className="pretty_container seven columns",
-                ),
-            ],
-            className="row flex-display",
-        ),
-        html.Div(
-            [
-                html.Div(
-                    [dcc.Graph(id="tipo_proceso_graph")],
-                    className="pretty_container seven columns",
-                ),
-                # html.Div(
-                #     [
-                #         dash_table.DataTable(
-                #             id='tipo-proceso-table',
-                #             columns=['ID', 'Tipo de Proceso'],
-                #         )
-                #     ],
-                #     className="pretty_container five columns",
-                # )
-            ],
-            className="row flex-display",
-        ),
-
-        # dcc.Tabs(id='tabs-control', value='graphs', children=[
-        #     dcc.Tab(label='Graphs', value='graphs'),
-        #     dcc.Tab(label='Data', value='data'),
-        # ]),
+        dcc.Tabs(id='tabs-control', value='graphs', children=[
+            dcc.Tab(label='Graphs', value='graphs'),
+            dcc.Tab(label='Files', value='files'),
+        ]),
 
         # content will be rendered in this element
-        # html.Div(id='tab-content')
+        html.Div(id='tab-content')
 
     ],
     id="mainContainer",
@@ -126,15 +82,14 @@ app.clientside_callback(
     [Input("count_graph", "figure")],
 )
 
-# @app.callback(
-#     Output('tab-content', 'children'),
-#     [Input('tabs-control', 'value')]
-# )
 
-
+@app.callback(
+    Output('tab-content', 'children'),
+    [Input('tabs-control', 'value')]
+)
 def update_content(value):
-    if value == 'data':
-        return data.layout
+    if value == 'files':
+        return files.layout
 
     return graphs.layout
 
@@ -158,7 +113,8 @@ def filter_dataframe(df, year_slider: list, grupo_dropdown: list, estado_proceso
 )
 def update_amnt_inconsistencies(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = filter_dataframe(
+        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
     return random.randint(0, len(dff) / 2)
 
 
@@ -172,7 +128,8 @@ def update_amnt_inconsistencies(year_slider: list, grupo_dropdown: list, estado_
 )
 def update_pct_inconsistencies(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = filter_dataframe(
+        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
     return f'{random.randint(0, 100)}%'
 
 
@@ -186,7 +143,8 @@ def update_pct_inconsistencies(year_slider: list, grupo_dropdown: list, estado_p
 )
 def update_avg_severity(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = filter_dataframe(
+        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
     return random.randint(0, 5)
 
 
@@ -200,24 +158,15 @@ def update_avg_severity(year_slider: list, grupo_dropdown: list, estado_proceso_
 )
 def update_count_reviewed(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = filter_dataframe(
+        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
     count_reviewed = random.randint(1, len(dff))
     return f'{count_reviewed}/{len(dff)}'
 
 
-@app.callback(
-    [
-        Output('tipo_proceso_graph', 'figure'),
-        Output('tipo-proceso-table', 'data')
-    ],
-    [
-        Input('year_slider', 'value'),
-        Input('grupo_dropdown', 'value'),
-        Input('estado_proceso_dropdown', 'value'),
-    ]
-)
 def update_tipo_proceso_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    dff = filter_dataframe(df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = filter_dataframe(
+        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
 
     graph_df = dff.groupby(['ID Tipo de Proceso'])['UID'].count(
     ).reset_index().rename(columns={'UID': 'count'})
@@ -229,7 +178,8 @@ def update_tipo_proceso_graph(year_slider: list, grupo_dropdown: list, estado_pr
 
     fig = px.bar(graph_df, x='ID Tipo de Proceso', y='count')
 
-    return fig, data
+    return fig
+
 
 @app.callback(
     Output('count_graph', 'figure'),
@@ -240,7 +190,68 @@ def update_tipo_proceso_graph(year_slider: list, grupo_dropdown: list, estado_pr
     ]
 )
 def update_municipio_estado_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    return px.treemap(DB, path=['municipioentrega','procesoestatus'], values='count')
+    return px.treemap(DB, path=['municipioentrega', 'procesoestatus'], values='count')
+
+
+def get_filters_string(dropdown: list) -> str:
+    return str(dropdown).replace('[', '').replace(']', '')
+
+
+# @app.callback(
+#     Output('count_contratos_graph', 'figure'),
+#     [
+#         Input('year_slider', 'value'),
+#         Input('grupo_dropdown', 'value'),
+#         Input('estado_proceso_dropdown', 'value'),
+#     ]
+# )
+def update_contratos_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
+    estado_proceso_list = get_filters_string(estado_proceso_dropdown)
+
+    dff = pd.read_sql(
+        f'''
+        SELECT fechacargasecop, count(procesocuantia)
+        FROM secop1contrato
+        WHERE fechacargasecop BETWEEN '{min(year_slider)}-01-01' and '{max(year_slider)}-12-31'
+        AND procesoestatus in ({estado_proceso_list})
+        group by fechacargasecop
+        ''', engine)
+
+    fig = px.line(dff, x="fechacargasecop", y="count", title='Contratos cargados en SECOP por año', labels={
+                  'count': 'Cantidad', 'fechacargasecop': 'Año'})
+
+    return fig
+
+# @app.callback(
+#     Output('grupos_contratos_grapsh', 'figure'),
+#     [
+#         Input('year_slider', 'value'),
+#         Input('grupo_dropdown', 'value'),
+#         Input('estado_proceso_dropdown', 'value'),
+#     ]
+# )
+
+
+def update_grupos_contratos(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
+    grupo_list = get_filters_string(grupo_dropdown)
+    year_list = get_filters_string(year_slider)
+
+    dff = pd.read_sql(
+        f'''
+        SELECT annosecop, A.grupoid, nombregrupo, count(A.grupoid) 
+        FROM secop1general C JOIN secop1grupo A 
+        ON C.grupoid=A.grupoid
+        WHERE C.grupoid in ({grupo_list}) and annosecop in ({year_list})
+        group by annosecop, nombregrupo, A.grupoid
+        HAVING count(A.grupoid) > 10000
+        ORDER BY count(A.grupoid) DESC
+        ''', engine)
+
+    fig = px.bar(dff, y="count", x="annosecop", color='nombregrupo',
+                 title='Grupos más frecuentes por año',
+                 labels={'count': 'Cantidad', 'annosecop': 'Año'}).update_layout(legend_title_text='Nombre Grupo')
+
+    return fig
 
 
 # Main

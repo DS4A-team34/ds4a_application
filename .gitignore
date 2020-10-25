@@ -15,3 +15,4 @@ venv_linux
 SECOP_I_Contratos.csv
 data/contracts
 data/reduced_data.csv
+data/df_files4B_pandas.pickle
