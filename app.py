@@ -18,7 +18,8 @@ from sqlalchemy import create_engine
 
 import settings
 from components import header
-from controls import DB, DB3, db2, df, tipo_proceso_dict
+from controls import DB, DB3, db2, table_df, tipo_proceso_dict, datevalues, grupo_dict
+from dash.exceptions import PreventUpdate
 from layouts import data, files, graphs
 
 # get relative data folder
@@ -26,7 +27,7 @@ PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("data").resolve()
 
 app = dash.Dash(
-    __name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}]
+    __name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}],
 )
 # app.config['suppress_callback_exceptions'] = True
 server = app.server
@@ -63,8 +64,9 @@ app.layout = html.Div(
         header.component,
 
         dcc.Tabs(id='tabs-control', value='graphs', children=[
-            dcc.Tab(label='Graphs', value='graphs'),
-            dcc.Tab(label='Files', value='files'),
+            dcc.Tab(label='Dahboard', value='graphs'),
+            dcc.Tab(label='Gestor de archivos', value='files'),
+            dcc.Tab(label='Auditoría', value='contracts'),
         ]),
 
         # content will be rendered in this element
@@ -88,20 +90,33 @@ app.clientside_callback(
     [Input('tabs-control', 'value')]
 )
 def update_content(value):
-    if value == 'files':
-        return files.layout
-
-    return graphs.layout
+    content_dict = {
+        'files': files.layout,
+        'contracts': data.layout,
+    }
+    
+    return content_dict.get(value, graphs.layout)
 
 
 def filter_dataframe(df, year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list) -> pd.DataFrame:
+    min_date = datevalues.get(year_slider[0])
+    max_date = datevalues.get(year_slider[-1])
+
     dff = df[
-        df["Anno Cargue SECOP"].isin(year_slider)
-        & df["ID Grupo"].isin(grupo_dropdown)
-        & df["Estado del Proceso"].isin(estado_proceso_dropdown)
+        (df["fechacargasecop"] >= min_date)
+        & (df["fechacargasecop"] <= max_date)
+        & (df["grupoid"].isin(grupo_dropdown))
+        & (df["procesoestatus"].isin(estado_proceso_dropdown))
     ].copy()
     return dff
 
+
+@app.callback(
+    Output('date_range_text', 'children'),
+    [Input('year_slider', 'value'),]
+)
+def update_date_range(value: list):
+    return f"Rango de fechas: {value[0]} - {value[-1]}"
 
 @app.callback(
     Output('amnt-inconsistencies-text', 'children'),
@@ -113,8 +128,7 @@ def filter_dataframe(df, year_slider: list, grupo_dropdown: list, estado_proceso
 )
 def update_amnt_inconsistencies(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(
-        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
     return random.randint(0, len(dff) / 2)
 
 
@@ -128,8 +142,7 @@ def update_amnt_inconsistencies(year_slider: list, grupo_dropdown: list, estado_
 )
 def update_pct_inconsistencies(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(
-        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
     return f'{random.randint(0, 100)}%'
 
 
@@ -143,8 +156,7 @@ def update_pct_inconsistencies(year_slider: list, grupo_dropdown: list, estado_p
 )
 def update_avg_severity(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(
-        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
     return random.randint(0, 5)
 
 
@@ -158,28 +170,9 @@ def update_avg_severity(year_slider: list, grupo_dropdown: list, estado_proceso_
 )
 def update_count_reviewed(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
     import random
-    dff = filter_dataframe(
-        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
-    count_reviewed = random.randint(1, len(dff))
-    return f'{count_reviewed}/{len(dff)}'
-
-
-def update_tipo_proceso_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    dff = filter_dataframe(
-        df, year_slider, grupo_dropdown, estado_proceso_dropdown)
-
-    graph_df = dff.groupby(['ID Tipo de Proceso'])['UID'].count(
-    ).reset_index().rename(columns={'UID': 'count'})
-    graph_df.sort_values('count', ascending=False, inplace=True)
-    graph_df = graph_df.head(5)
-
-    # TODO: add table
-    # data = {p: tipo_proceso_dict[p] for p in graph_df['ID Tipo de Proceso']}
-
-    fig = px.bar(graph_df, x='ID Tipo de Proceso', y='count')
-
-    return fig
-
+    # dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    # count_reviewed = random.randint(1, len(dff))
+    return f'0/0'
 
 @app.callback(
     Output('count_graph', 'figure'),
@@ -197,61 +190,138 @@ def get_filters_string(dropdown: list) -> str:
     return str(dropdown).replace('[', '').replace(']', '')
 
 
-# @app.callback(
-#     Output('count_contratos_graph', 'figure'),
-#     [
-#         Input('year_slider', 'value'),
-#         Input('grupo_dropdown', 'value'),
-#         Input('estado_proceso_dropdown', 'value'),
-#     ]
-# )
-def update_contratos_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    estado_proceso_list = get_filters_string(estado_proceso_dropdown)
+@app.callback(
+    Output('count_contratos_graph', 'figure'),
+    [
+        Input('year_slider', 'value'),
+        Input('grupo_dropdown', 'value'),
+        Input('estado_proceso_dropdown', 'value'),
+    ]
+)
+def update_contratos_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):    
+    dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = dff.groupby('fechacargasecop')['uuid'].count().reset_index()
+    dff.rename(columns={'uuid': 'count'}, inplace=True)
 
-    dff = pd.read_sql(
-        f'''
-        SELECT fechacargasecop, count(procesocuantia)
-        FROM secop1contrato
-        WHERE fechacargasecop BETWEEN '{min(year_slider)}-01-01' and '{max(year_slider)}-12-31'
-        AND procesoestatus in ({estado_proceso_list})
-        group by fechacargasecop
-        ''', engine)
-
-    fig = px.line(dff, x="fechacargasecop", y="count", title='Contratos cargados en SECOP por año', labels={
+    fig = px.line(dff, x="fechacargasecop", y="count", title='Cantidad de contratos cargados a SECOP I', labels={
                   'count': 'Cantidad', 'fechacargasecop': 'Año'})
 
     return fig
 
-# @app.callback(
-#     Output('grupos_contratos_grapsh', 'figure'),
-#     [
-#         Input('year_slider', 'value'),
-#         Input('grupo_dropdown', 'value'),
-#         Input('estado_proceso_dropdown', 'value'),
-#     ]
-# )
 
-
+@app.callback(
+    Output('grupos_contratos_grapsh', 'figure'),
+    [
+        Input('year_slider', 'value'),
+        Input('grupo_dropdown', 'value'),
+        Input('estado_proceso_dropdown', 'value'),
+    ]
+)
 def update_grupos_contratos(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    grupo_list = get_filters_string(grupo_dropdown)
-    year_list = get_filters_string(year_slider)
+    dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = dff.groupby(['period', 'grupoid'])['uuid'].count().reset_index()
+    dff.rename(columns={'uuid': 'count'}, inplace=True)
+    dff['period'] = dff['period'].astype(str)
+    dff['nombregrupo'] = dff['grupoid'].map(grupo_dict)
+    
+    # dff = pd.read_sql(
+    #     f'''
+    #     SELECT annosecop, A.grupoid, nombregrupo, count(A.grupoid) 
+    #     FROM secop1general C JOIN secop1grupo A 
+    #     ON C.grupoid=A.grupoid
+    #     WHERE C.grupoid in ({grupo_list}) and annosecop in ({year_list})
+    #     group by annosecop, nombregrupo, A.grupoid
+    #     HAVING count(A.grupoid) > 10000
+    #     ORDER BY count(A.grupoid) DESC
+    #     ''', engine)
 
-    dff = pd.read_sql(
-        f'''
-        SELECT annosecop, A.grupoid, nombregrupo, count(A.grupoid) 
-        FROM secop1general C JOIN secop1grupo A 
-        ON C.grupoid=A.grupoid
-        WHERE C.grupoid in ({grupo_list}) and annosecop in ({year_list})
-        group by annosecop, nombregrupo, A.grupoid
-        HAVING count(A.grupoid) > 10000
-        ORDER BY count(A.grupoid) DESC
-        ''', engine)
-
-    fig = px.bar(dff, y="count", x="annosecop", color='nombregrupo',
-                 title='Grupos más frecuentes por año',
-                 labels={'count': 'Cantidad', 'annosecop': 'Año'}).update_layout(legend_title_text='Nombre Grupo')
+    fig = px.bar(dff, y="count", x="period", color='nombregrupo',
+                 title='Grupos más frecuentes por periodo',
+                 labels={'count': 'Cantidad', 'period': 'Periodo'}).update_layout(legend_title_text='Nombre grupo')
 
     return fig
+
+
+operators = [['ge ', '>='],
+             ['le ', '<='],
+             ['lt ', '<'],
+             ['gt ', '>'],
+             ['ne ', '!='],
+             ['eq ', '='],
+             ['contains '],
+             ['datestartswith ']]
+
+
+def split_filter_part(filter_part):
+    for operator_type in operators:
+        for operator in operator_type:
+            if operator in filter_part:
+                name_part, value_part = filter_part.split(operator, 1)
+                name = name_part[name_part.find('{') + 1: name_part.rfind('}')]
+
+                value_part = value_part.strip()
+                v0 = value_part[0]
+                if (v0 == value_part[-1] and v0 in ("'", '"', '`')):
+                    value = value_part[1: -1].replace('\\' + v0, v0)
+                else:
+                    try:
+                        value = float(value_part)
+                    except ValueError:
+                        value = value_part
+
+                # word operators need spaces after them in the filter string,
+                # but we don't want these later
+                return name, operator_type[0].strip(), value
+
+    return [None] * 3
+
+
+@app.callback(
+    Output('contracts-table', "data"),
+    [Input('contracts-table', "filter_query")])
+def update_table(filter):
+    try:
+        filtering_expressions = filter.split(' && ')
+        dff = table_df
+        for filter_part in filtering_expressions:
+            col_name, operator, filter_value = split_filter_part(filter_part)
+
+            if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+                # these operators match pandas series operator method names
+                dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+            elif operator == 'contains':
+                dff = dff.loc[dff[col_name].str.contains(filter_value)]
+            elif operator == 'datestartswith':
+                # this is a simplification of the front-end filtering logic,
+                # only works with complete fields in standard format
+                dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+        return dff.to_dict('records')
+    except AttributeError:
+        raise PreventUpdate
+
+
+@app.callback(
+    [
+        Output('selected-contracts-text', 'children'),
+        Output('selected-rows', 'children'),
+        Output('process-dialog', 'message')
+    ],
+    [Input('contracts-table', 'selected_rows'),]
+)
+def update_styles(selected_rows):
+    # selected columns is a list of indexes
+    # uuid_selected = table_df.iloc[selected_columns]['uuid']
+    dialog = f"Selected rows: {selected_rows}"
+    return len(selected_rows), selected_rows, dialog
+
+
+@app.callback(Output('process-dialog', 'displayed'),
+              [Input('button-process', 'n_clicks')])
+def display_confirm(n_clicks):
+    if n_clicks:
+        return True
+    return False
 
 
 # Main

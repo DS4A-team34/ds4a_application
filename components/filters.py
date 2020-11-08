@@ -1,20 +1,20 @@
 import dash_core_components as dcc
 import dash_html_components as html
 
-from controls import df, grupo_options, grupo_dict, estado_proceso_dict, estado_proceso_options
+from controls import grupo_options, grupo_dict, estado_proceso_dict, estado_proceso_options, table_df, tags, datevalues
 
 component = html.Div(
     [
         html.P(
-            # "Filter by construction date (or select range in histogram):",
-            "Filtrar por año de cargo al SECOP:",
+            "Filtrar por fecha de cargue al SECOP I:",
             className="control_label",
         ),
         dcc.RangeSlider(
             id="year_slider",
-            min=df['Anno Cargue SECOP'].min(),
-            max=df['Anno Cargue SECOP'].max(),
-            value=[2018, 2020],
+            min=1,
+            max=12,
+            value=[1, 12],
+            marks=tags,
             className="dcc_control",
         ),
         html.P("Filtrar por estado del proceso:", className="control_label"),

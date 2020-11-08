@@ -15,7 +15,7 @@ layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="count_contratos_graph", figure=plot_grf)],
+                    [dcc.Graph(id="count_contratos_graph")],
                     className="pretty_container twelve columns",
                 ),
             ],
@@ -24,7 +24,7 @@ layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="grupos_contratos_grapsh", figure=min_graf)],
+                    [dcc.Graph(id="grupos_contratos_grapsh")],
                     className="pretty_container seven columns",
                 ),
             ],

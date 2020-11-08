@@ -2,6 +2,8 @@ import pandas as pd
 from sqlalchemy import create_engine
 import plotly.express as px
 import plotly.graph_objects as go
+import dash_table.FormatTemplate as FormatTemplate
+from pandas.tseries.offsets import DateOffset
 
 import settings
 
@@ -10,7 +12,65 @@ import settings
 engine = create_engine(settings.DATABASE['CONNECTION'], max_overflow=20)
 
 # READ FILES
-df = pd.read_csv('data/reduced_data.csv')
+# df = pd.read_csv('data/reduced_data.csv')
+
+# Table section
+limit = 10000
+table_df = pd.read_sql(
+    f'''
+    SELECT v.*, c.fechacargasecop, g.grupoid
+	FROM secop1validacion v, secop1contrato c, secop1general g
+	WHERE v.uuid = c.uuid and g.uuid = v.uuid
+    LIMIT {limit}
+    ''', engine)
+
+# get dates range
+min_date_cargue = table_df['fechacargasecop'].min()
+max_date_cargue = table_df['fechacargasecop'].max()
+
+dates_range = pd.date_range(start=min_date_cargue, end=max_date_cargue, freq='M')
+dlist = pd.DatetimeIndex(dates_range).normalize()
+tags = {}
+datevalues = {}
+x=1
+for i in dlist:
+    tags[x] = (i + DateOffset(months=1)).strftime('%b')
+    datevalues[x] = i
+    x = x + 1
+
+# get periods for groups
+table_df['period'] = pd.to_datetime(table_df['fechacargasecop']).dt.to_period("M")
+table_df['period'] = table_df['period'].astype(str)
+
+# define some formats
+format_fields = {
+    'money': ['contratocuantia', 'contratoconadicionesvalor'],
+    'datetime': ['fechacargasecop', 'firmacontratofecha', 'period'],
+    'numeric': []
+}
+
+formats = {
+    'money': {'type': 'numeric', 'format': FormatTemplate.money(0)},
+    'datetime': {'type': 'datetime'},
+    'numeric': {'type': 'numeric'},
+    'text': {'type': 'text'}
+}
+
+def get_field_info(column: str):
+    result = {"name": column, "id": column}
+
+    final_format = 'text'
+    for f, fields in format_fields.items():
+        if column in fields:
+            final_format = f
+            break
+    
+    format_dict = formats.get(final_format)
+    result.update(format_dict)
+    return result
+
+table_columns = [get_field_info(c) for c in table_df.columns]
+
 
 # PDF pikles
 filename_files = 'data/df_files4B_pandas.pickle'
@@ -22,7 +82,7 @@ grupo_dict = dict(zip(grupo_df['grupoid'], grupo_df['nombregrupo']))
 grupo_options = [{"label": v, "value": k} for k, v in grupo_dict.items()]
 
 # TODO: create "estado_proceso" table
-estado_proceso_dict = {e: e for e in sorted(df['Estado del Proceso'].unique())}
+estado_proceso_dict = {e: e for e in sorted(table_df['procesoestatus'].unique())}
 estado_proceso_options = [{"label": v, "value": k} for k, v in estado_proceso_dict.items()]
 
 # define dict and options for "tipo de proceso"
@@ -67,20 +127,6 @@ min_graf= px.bar(DB3, y="count",x="annosecop", color='nombregrupo',
        title='Grupos mas frecuentes por año',
        labels={'count':'Cantidad','annosecop':'Año'}).update_layout(legend_title_text='Nombre Grupo')
 
-
-# TODO: select reduced columns
-columns_small = [
-    'UID', 'Anno Cargue SECOP', 'Anno Firma del Contrato', 'Fecha de Cargue en el SECOP',
-    'Nivel Entidad', 'Nombre de la Entidad', 'NIT de la Entidad',
-    'ID Tipo de Proceso', 'Estado del Proceso',
-    'ID Regimen de Contratacion', 'ID Objeto a Contratar',
-    'Municipio Obtencion', 'Municipio Entrega', 'Cuantia Proceso',
-    'ID Grupo', 'ID Familia', 'ID Clase'
-]
-columns_small = df.columns
-
-# df_small = df.copy()
-df_small = df[columns_small].copy()
 
 # TODO: Files (pending)
 def get_pivot_heatmap(df, values, margins):

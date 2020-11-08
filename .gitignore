@@ -11,8 +11,13 @@ venv
 venv_linux
 .env
 
-# huge data
+# data to ignore
 SECOP_I_Contratos.csv
 data/contracts
 data/reduced_data.csv
 data/df_files4B_pandas.pickle
+data/temporal.csv
+
+# ignore sample app
+controls_original.py
+app_original.py
