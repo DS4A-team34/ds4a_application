@@ -18,7 +18,7 @@ engine = create_engine(settings.DATABASE['CONNECTION'], max_overflow=20)
 limit = 10000
 table_df = pd.read_sql(
     f'''
-    SELECT v.*, c.fechacargasecop, g.grupoid
+    SELECT v.*, municipioejecuta, municipioentrega, c.fechacargasecop, g.grupoid
 	FROM secop1validacion v, secop1contrato c, secop1general g
 	WHERE v.uuid = c.uuid and g.uuid = v.uuid
     LIMIT {limit}
@@ -90,42 +90,13 @@ tipo_proceso_df = pd.read_sql_table('secop1proceso', engine)
 tipo_proceso_dict = dict(zip(tipo_proceso_df['procesoid'], tipo_proceso_df['procesotipo']))
 tipo_proceso_options = [{"label": v, "value": k} for k, v in tipo_proceso_dict.items()]
 
-
-DB = pd.read_sql(
-    '''
-    SELECT municipioentrega, procesoestatus, count(procesocuantia) FROM secop1contrato
-    WHERE municipioentrega != 'No definido' and contratotipo ='Prestación de Servicios'
-    group by municipioentrega, contratotipo, procesoestatus
-    HAVING COUNT(procesocuantia) > 20000
-    ORDER BY COUNT(procesocuantia) DESC
-    ''', engine)
-
-
-db2 = pd.read_sql(
-    '''
-    SELECT fechacargasecop, count(procesocuantia)
-    FROM secop1contrato
-    group by fechacargasecop
-    ''', engine)
-
-
-plot_grf=px.line(db2,x="fechacargasecop",y="count", title='Contratos cargados en SECOP por año',
-        labels={'count':'Cantidad','fechacargasecop':'Año'})
-
-
-DB3=pd.read_sql(
-    '''
-    SELECT annosecop,A.grupoid, nombregrupo, count(A.grupoid) FROM secop1general C
-    JOIN secop1grupo A ON C.grupoid=A.grupoid
-    group by annosecop,nombregrupo, A.grupoid
-    HAVING count(A.grupoid) > 10000
-    ORDER BY count(A.grupoid) DESC
-    ''', engine)
-
-
-min_graf= px.bar(DB3, y="count",x="annosecop", color='nombregrupo',
-       title='Grupos mas frecuentes por año',
-       labels={'count':'Cantidad','annosecop':'Año'}).update_layout(legend_title_text='Nombre Grupo')
+# define Municipio options
+municipios_dict = {
+    'municipioobtencion': 'Municipio Obtención',
+    'municipioejecuta': 'Municipio Ejecuta',
+    'municipioentrega': 'Municipio Entrega',
+}
+municipios_options = [{"label": v, "value": k} for k, v in municipios_dict.items()]
 
 
 # TODO: Files (pending)
@@ -177,3 +148,16 @@ def plot_size(df):
 
 quantity_files_fig = plot_pages(df_files)
 size_files_fig = plot_size(df_files)
+
+# VALIDATION SECTION
+validados_count = pd.read_sql(
+'''select count(distinct uuid)
+from doc_validados dv ''', engine)
+validados_count = int(validados_count.iloc[0, 0])
+
+availables_count = pd.read_sql(
+'''select count(distinct uuid)
+from doc_contrato dc  ''', engine)
+availables_count = int(availables_count.iloc[0, 0])
+
+validation_state = f'{validados_count} / {availables_count}'

@@ -18,7 +18,7 @@ from sqlalchemy import create_engine
 
 import settings
 from components import header
-from controls import DB, DB3, db2, table_df, tipo_proceso_dict, datevalues, grupo_dict
+from controls import table_df, tipo_proceso_dict, datevalues, grupo_dict, municipios_dict
 from dash.exceptions import PreventUpdate
 from layouts import data, files, graphs
 
@@ -81,7 +81,7 @@ app.layout = html.Div(
 app.clientside_callback(
     ClientsideFunction(namespace="clientside", function_name="resize"),
     Output("output-clientside", "children"),
-    [Input("count_graph", "figure")],
+    [Input("grupos_contratos_grapsh", "figure")],
 )
 
 
@@ -175,15 +175,29 @@ def update_count_reviewed(year_slider: list, grupo_dropdown: list, estado_proces
     return f'0/0'
 
 @app.callback(
-    Output('count_graph', 'figure'),
+    Output('contracts_deparment_plot', 'figure'),
     [
         Input('year_slider', 'value'),
         Input('grupo_dropdown', 'value'),
         Input('estado_proceso_dropdown', 'value'),
+        Input('tipo_municipio_dropdown', 'value'),
     ]
 )
-def update_municipio_estado_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    return px.treemap(DB, path=['municipioentrega', 'procesoestatus'], values='count')
+def update_municipio_estado_graph(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list, tipo_municipio_dropdown: str):
+    variable = tipo_municipio_dropdown
+    variable_readable = municipios_dict.get(variable)
+
+    dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
+    dff = dff[~(dff[variable].isna()) & ~(dff[variable] == 'No definido')].copy()
+
+    dff = dff.groupby([variable, 'procesoestatus'])['uuid'].count().reset_index()
+    dff.rename(columns={'uuid': 'count'}, inplace=True)
+    dff.sort_values(by='count', ascending=False, inplace=True)
+
+    title = f'Concentración de contratos por "{variable_readable}" y estado del proceso'
+
+    return px.treemap(dff.head(10), path=[variable, 'procesoestatus'], values='count',
+                      title=title)
 
 
 def get_filters_string(dropdown: list) -> str:
@@ -221,19 +235,7 @@ def update_grupos_contratos(year_slider: list, grupo_dropdown: list, estado_proc
     dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
     dff = dff.groupby(['period', 'grupoid'])['uuid'].count().reset_index()
     dff.rename(columns={'uuid': 'count'}, inplace=True)
-    dff['period'] = dff['period'].astype(str)
     dff['nombregrupo'] = dff['grupoid'].map(grupo_dict)
-    
-    # dff = pd.read_sql(
-    #     f'''
-    #     SELECT annosecop, A.grupoid, nombregrupo, count(A.grupoid) 
-    #     FROM secop1general C JOIN secop1grupo A 
-    #     ON C.grupoid=A.grupoid
-    #     WHERE C.grupoid in ({grupo_list}) and annosecop in ({year_list})
-    #     group by annosecop, nombregrupo, A.grupoid
-    #     HAVING count(A.grupoid) > 10000
-    #     ORDER BY count(A.grupoid) DESC
-    #     ''', engine)
 
     fig = px.bar(dff, y="count", x="period", color='nombregrupo',
                  title='Grupos más frecuentes por periodo',
@@ -302,18 +304,29 @@ def update_table(filter):
 
 
 @app.callback(
-    [
-        Output('selected-contracts-text', 'children'),
-        Output('selected-rows', 'children'),
-        Output('process-dialog', 'message')
-    ],
+    Output('selected-rows', 'children'),
     [Input('contracts-table', 'selected_rows'),]
 )
-def update_styles(selected_rows):
-    # selected columns is a list of indexes
+def update_selected_rows(selected_rows):
+    return selected_rows
+
+
+@app.callback(
+    Output('selected-contracts-text', 'children'),
+    [Input('selected-rows', 'children'),]
+)
+def update_selected_contracts_text(selected_rows):
+    return len(selected_rows)
+
+
+@app.callback(
+    Output('process-dialog', 'message'),
+    [Input('selected-rows', 'children'),]
+)
+def update_dialog_text_selected_rows(selected_rows):
     # uuid_selected = table_df.iloc[selected_columns]['uuid']
     dialog = f"Selected rows: {selected_rows}"
-    return len(selected_rows), selected_rows, dialog
+    return dialog
 
 
 @app.callback(Output('process-dialog', 'displayed'),

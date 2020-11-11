@@ -30,7 +30,7 @@ component = html.Div(
             className="row container-display",
         ),
         html.Div(
-            [dcc.Graph(id="count_graph")],
+            [dcc.Graph(id="grupos_contratos_grapsh")],
             id="countGraphContainer",
             className="pretty_container",
         ),
