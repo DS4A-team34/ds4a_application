@@ -11,6 +11,7 @@ component = dash_table.DataTable(
         'textOverflow': 'ellipsis',
         'maxWidth': 0
     },
+    style_table={'overflowX': 'auto'},
     tooltip_data=[
         {
             column: {'value': str(value), 'type': 'markdown'}

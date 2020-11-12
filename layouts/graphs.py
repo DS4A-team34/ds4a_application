@@ -15,7 +15,7 @@ layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="count_contratos_graph")],
+                    [dcc.Graph(id="contracts_map_plot")],
                     className="pretty_container twelve columns",
                 ),
             ],
@@ -43,6 +43,15 @@ layout = html.Div(
                 ),
             ],
             className="row flex-display",
-        )
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="count_contratos_graph")],
+                    className="pretty_container twelve columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
     ],
 )

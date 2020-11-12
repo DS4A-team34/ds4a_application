@@ -73,7 +73,12 @@ body {
 #countGraphContainer {
   flex: 5;
   position: relative;
-  min-height: 400px;
+  min-height: 26em;
+}
+
+.iframe-contract {
+  width: 50%;
+  height: 40em;
 }
 
 #header {
@@ -141,4 +146,76 @@ body {
 #pie_graph > div > div > svg:nth-child(3) > g.infolayer > g.legend {
   pointer-events: all;
   transform: translate(30px, 349px);
+}
+
+#select-container{
+	background-color: #F0EFEE;
+	border-top: 2px solid #F51111;
+	width: 50%;
+	/*<!--box-shadow: grey 5px 5px 5px ;-->*/
+	box-shadow: 5px 5px 5px slategrey;
+	border-radius: 5px;
+	position: relative;
+	margin-bottom: 3%;
+	margin-top: 2%;
+	margin-left: 5%;
+  padding: 1%;
+}
+
+#select-grupo{
+	background-color: #F0EFEE;
+	border-top: 2px solid #F51111;
+  width: 50%;
+  /*<!--box-shadow: grey 5px 5px 5px ;-->*/
+	box-shadow: 5px 5px 5px slategrey;
+	border-radius: 5px;
+	position: relative;
+	margin-bottom: 3%;
+	margin-top: 2%;
+	margin-left: 5%;
+  padding: 1%;
+}
+
+#valor-contrato{
+	border-top: 2px solid #05016B;
+	background-color: #F0EFEE;
+	width: 90%;
+	box-shadow: 5px 5px 5px slategrey;
+	border-radius: 5px;
+	position: relative;
+	margin-bottom: 10%;
+	margin-left: 10%;
+	margin-right: 10%;
+    padding: 1%;
+	
+}
+#valor-contrato1{border-top: 2px solid #E100D9;
+	background-color: #F0EFEE;
+	width: 90%;
+	box-shadow: 5px 5px 5px slategrey;
+	border-radius: 5px;
+	position: relative;
+	margin: 10%;
+    padding: 1%;
+	
+}
+#valor-contrato2{
+	border-top: 2px solid #D06100;
+	background-color: #F0EFEE;
+	width: 90%;
+	box-shadow: 5px 5px 5px slategrey;
+	border-radius: 5px;
+	position: relative;
+	margin: 10%;
+    padding: 1%;
+}
+#valor-contrato3{
+	border-top: 2px solid #00D10A;
+	background-color: #F0EFEE;
+	width: 90%;
+	box-shadow: 5px 5px 5px slategrey;
+	border-radius: 5px;
+	position: relative;
+	margin: 10%;
+    padding: 1%;
 }

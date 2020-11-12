@@ -18,9 +18,10 @@ from sqlalchemy import create_engine
 
 import settings
 from components import header
-from controls import table_df, tipo_proceso_dict, datevalues, grupo_dict, municipios_dict
+from controls import table_df, tipo_proceso_dict, datevalues, grupo_dict, municipios_dict, engine, df_x, geo_df, geo_json
 from dash.exceptions import PreventUpdate
-from layouts import data, files, graphs
+from layouts import data, files, graphs, inspect, inconsistencias
+from flask import Flask, render_template, request
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
@@ -52,6 +53,12 @@ layout = dict(
     ),
 )
 
+@app.server.route('/contracts/<string:uuid>', methods=['GET'])
+def contract(uuid: str):
+    if request.method == 'GET':
+        return render_template('contract.html', uuid=uuid)
+
+app.title = 'DS4A 3.0 - Team #34'
 
 # Create app layout
 app.layout = html.Div(
@@ -60,13 +67,17 @@ app.layout = html.Div(
         # empty Div to trigger javascript file for graph resizing
         html.Div(id="output-clientside"),
 
+        dcc.Location(id='url', refresh=False),
+
         # header
         header.component,
 
         dcc.Tabs(id='tabs-control', value='graphs', children=[
-            dcc.Tab(label='Dahboard', value='graphs'),
-            dcc.Tab(label='Gestor de archivos', value='files'),
+            dcc.Tab(label='Dahboard General', value='graphs'),
+            dcc.Tab(label='Dahboard Inconsistencias', value='inconsistencias'),
             dcc.Tab(label='Auditoría', value='contracts'),
+            dcc.Tab(label='Inspección', value='inspect'),
+            dcc.Tab(label='Gestor de archivos', value='files'),
         ]),
 
         # content will be rendered in this element
@@ -87,13 +98,19 @@ app.clientside_callback(
 
 @app.callback(
     Output('tab-content', 'children'),
-    [Input('tabs-control', 'value')]
+    [
+        Input('tabs-control', 'value'), 
+        # Input('button-inspect', 'n_clicks'),
+    ]
 )
 def update_content(value):
     content_dict = {
         'files': files.layout,
         'contracts': data.layout,
+        'inspect': inspect.layout,
+        'inconsistencias': inconsistencias.layout
     }
+    # value = 'inspect' if n_clicks else value
     
     return content_dict.get(value, graphs.layout)
 
@@ -244,6 +261,40 @@ def update_grupos_contratos(year_slider: list, grupo_dropdown: list, estado_proc
     return fig
 
 
+# MAPA PLOT
+def filter_geo_dataframe(df, grupo_dropdown: list, estado_proceso_dropdown: list) -> pd.DataFrame:
+    dff = df[
+        (df["grupoid"].isin(grupo_dropdown))
+        & (df["procesostatus"].isin(estado_proceso_dropdown))
+    ].copy()
+    return dff
+
+
+@app.callback(
+    Output('contracts_map_plot', 'figure'),
+    [
+        Input('grupo_dropdown', 'value'),
+        Input('estado_proceso_dropdown', 'value'),
+    ]
+)
+def update_map_plot(grupo_dropdown: list, estado_proceso_dropdown: list):
+    dff = filter_geo_dataframe(geo_df, grupo_dropdown, estado_proceso_dropdown)
+
+    dff = dff.groupby(by=['dpto', 'id'])['cantidad'].sum().reset_index()
+
+    fig = px.choropleth_mapbox(dff, geojson=geo_json, locations='id', color='cantidad',
+                           color_continuous_scale="Viridis",
+                           range_color=(0, max(dff.cantidad)),
+                           mapbox_style="carto-positron",
+                           zoom=4.5, center = {"lat": 4.60971, "lon": -74.08175},
+                           hover_name='dpto',
+                           opacity=0.5,
+                           title='Concentración de contratos por departamento'
+                          ).update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+    
+    return fig
+
+# AUDITORÍA 
 operators = [['ge ', '>='],
              ['le ', '<='],
              ['lt ', '<'],
@@ -303,6 +354,8 @@ def update_table(filter):
         raise PreventUpdate
 
 
+# AUDITORÍA
+
 @app.callback(
     Output('selected-rows', 'children'),
     [Input('contracts-table', 'selected_rows'),]
@@ -336,6 +389,82 @@ def display_confirm(n_clicks):
         return True
     return False
 
+@app.callback([Output('inspect-dialog', 'message'),
+               Output('inspect-dialog', 'displayed')],
+              [Input('button-inspect', 'n_clicks')],
+              [State('input-uuid', 'value')],
+            )
+def update_inspect_dialog(n_clicks, uuid: str):
+    message = f'Inspecting contract {uuid}'
+    show = False if n_clicks else False
+    return message, show
+
+
+def get_contract_validation_state(uuid: str):
+    pass
+
+def get_contract_path(uuid: str):
+    pass
+
+
+# INCONSISTENCIAS
+def filter_df_inconsistencias(df, param: str, value: str):
+    dff = df[df[param] == value].copy()
+    return dff
+
+
+@app.callback(
+    Output('radio-item-grupo', 'options'),
+    [Input('entidad-dropdown', 'value')],
+)
+def update_grupo_options(entidad: str):
+    dff = filter_df_inconsistencias(df_x, 'entidadnombre', entidad)
+    grupo_ids = dff['grupoid'].unique()
+
+    return [{"label": v, "value": k} for k, v in grupo_dict.items() if k in grupo_ids]
+
+@app.callback(
+    Output('total-valor-contrato-text', 'children'),
+    [Input('radio-item-grupo', 'value'),
+     Input('entidad-dropdown', 'value')]
+)
+def update_total_valor_contrato(grupo: str, entidad: str):
+    dff = filter_df_inconsistencias(df_x, 'entidadnombre', entidad)
+    dff = filter_df_inconsistencias(dff, 'grupoid', grupo)
+    return dff['contratocuantia']
+
+
+@app.callback(
+    Output('total-valor-adiciones-text', 'children'),
+    [Input('radio-item-grupo', 'value'),
+     Input('entidad-dropdown', 'value')]
+)
+def update_total_adiciones_contrato(grupo: str, entidad: str):
+    dff = filter_df_inconsistencias(df_x, 'entidadnombre', entidad)
+    dff = filter_df_inconsistencias(dff, 'grupoid', grupo)
+    return dff['contratoconadicionesvalor']
+
+
+@app.callback(
+    Output('total-cantidad-text', 'children'),
+    [Input('radio-item-grupo', 'value'),
+     Input('entidad-dropdown', 'value')]
+)
+def update_total_cantida(grupo: str, entidad: str):
+    dff = filter_df_inconsistencias(df_x, 'entidadnombre', entidad)
+    dff = filter_df_inconsistencias(dff, 'grupoid', grupo)
+    return dff['cantidad']
+
+
+@app.callback(
+    Output('ooc_graph_id', 'value'),
+    [Input('radio-item-grupo', 'value'),
+     Input('entidad-dropdown', 'value')]
+)
+def update_coincidencia_pct(grupo: str, entidad: str):
+    dff = filter_df_inconsistencias(df_x, 'entidadnombre', entidad)
+    dff = filter_df_inconsistencias(dff, 'grupoid', grupo)
+    return dff['coincidencia'] * 10
 
 # Main
 if __name__ == "__main__":

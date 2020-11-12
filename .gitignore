@@ -21,3 +21,5 @@ data/temporal.csv
 # ignore sample app
 controls_original.py
 app_original.py
+appcon.py
+assets/styles1.txt
