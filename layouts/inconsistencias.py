@@ -63,13 +63,11 @@ layout = html.Div(
         html.Div(id='contenedor', children=[
             html.Div(id='valor-contrato', children=[
                 html.H1(id='vc1', children=" Total Valor Contrato"),
-                html.H2(id='total-valor-contrato-text'),
+                html.H2(id='total-valor-contrato-text', className="valor-text"),
             ],),
             html.Div(id='valor-contrato1', children=[
                 html.H1(id='vc2', children=" Total Valor Contrato con adiciones"),
-                html.H2(id='total-valor-adiciones-text'),
-                dcc.Graph(id="indicator-graph1",	figure=blank_fig(
-                    row_heights[0]), config={"displayModeBar": False},),
+                html.H2(id='total-valor-adiciones-text', className="valor-text"),
             ],),
             html.Div(id='valor-contrato2', children=[
                 html.H1(id='vc3', children=" Porcentaje de inconsistencias"),
@@ -87,15 +85,10 @@ layout = html.Div(
                     max=10,
                     value=0,
                 ),
-                # dcc.Graph(id="indicator-graph2",	figure=blank_fig(
-                #     row_heights[0]), config={"displayModeBar": False},)
-
             ],),
             html.Div(id='valor-contrato3', children=[
                 html.H1(id='vc4', children=" Total cantidad Contrato"),
-                html.H2(id='total-cantidad-text'),
-                dcc.Graph(id="indicator-graph3",	figure=blank_fig(
-                    row_heights[0]), config={"displayModeBar": False},),
+                html.H2(id='total-cantidad-text', className="valor-text"),
             ],),
 
         ], style={'columnCount': 2}),

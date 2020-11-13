@@ -423,6 +423,48 @@ def update_grupo_options(entidad: str):
 
     return [{"label": v, "value": k} for k, v in grupo_dict.items() if k in grupo_ids]
 
+
+def SetMoneda(num, simbolo="US$", n_decimales=2):
+    """Convierte el numero en un string en formato moneda
+    SetMoneda(45924.457, 'RD$', 2) --> 'RD$ 45,924.46'     
+    """
+    #con abs, nos aseguramos que los dec. sea un positivo.
+    n_decimales = abs(n_decimales)
+    
+    #se redondea a los decimales idicados.
+    num = round(num, n_decimales)
+
+    #se divide el entero del decimal y obtenemos los string
+    num, dec = str(num).split(".")
+
+    #si el num tiene menos decimales que los que se quieren mostrar,
+    #se completan los faltantes con ceros.
+    dec += "0" * (n_decimales - len(dec))
+    
+    #se invierte el num, para facilitar la adicion de comas.
+    num = num[::-1]
+    
+    #se crea una lista con las cifras de miles como elementos.
+    l = [num[pos:pos+3][::-1] for pos in range(0,50,3) if (num[pos:pos+3])]
+    l.reverse()
+    
+    #se pasa la lista a string, uniendo sus elementos con comas.
+    num = str.join(",", l)
+    
+    #si el numero es negativo, se quita una coma sobrante.
+    try:
+        if num[0:2] == "-,":
+            num = "-%s" % num[2:]
+    except IndexError:
+        pass
+    
+    #si no se especifican decimales, se retorna un numero entero.
+    if not n_decimales:
+        return "%s %s" % (simbolo, num)
+        
+    return "%s %s.%s" % (simbolo, num, dec)
+
+
 @app.callback(
     Output('total-valor-contrato-text', 'children'),
     [Input('radio-item-grupo', 'value'),
@@ -431,7 +473,7 @@ def update_grupo_options(entidad: str):
 def update_total_valor_contrato(grupo: str, entidad: str):
     dff = filter_df_inconsistencias(df_x, 'entidadnombre', entidad)
     dff = filter_df_inconsistencias(dff, 'grupoid', grupo)
-    return dff['contratocuantia']
+    return SetMoneda(dff['contratocuantia'][dff['contratocuantia'].index[0]],"$", 2) if not dff.empty else 0
 
 
 @app.callback(
@@ -442,7 +484,7 @@ def update_total_valor_contrato(grupo: str, entidad: str):
 def update_total_adiciones_contrato(grupo: str, entidad: str):
     dff = filter_df_inconsistencias(df_x, 'entidadnombre', entidad)
     dff = filter_df_inconsistencias(dff, 'grupoid', grupo)
-    return dff['contratoconadicionesvalor']
+    return SetMoneda(dff['contratoconadicionesvalor'][dff['contratocuantia'].index[0]],"$", 2) if not dff.empty else 0
 
 
 @app.callback(
@@ -453,7 +495,7 @@ def update_total_adiciones_contrato(grupo: str, entidad: str):
 def update_total_cantida(grupo: str, entidad: str):
     dff = filter_df_inconsistencias(df_x, 'entidadnombre', entidad)
     dff = filter_df_inconsistencias(dff, 'grupoid', grupo)
-    return dff['cantidad']
+    return dff['cantidad'] if not dff.empty else 0
 
 
 @app.callback(

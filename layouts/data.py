@@ -25,11 +25,6 @@ layout = html.Div(
                     dcc.ConfirmDialog(
                         id='process-dialog',
                     ),
-                    dcc.Input(id='input-uuid', placeholder='UUID del contrato a inspeccionar', style={'width': '300px'}),
-                    html.Button('Inpeccionar', id='button-inspect'),
-                    dcc.ConfirmDialog(
-                        id='inspect-dialog',
-                    ),
                 ],
                 id="info-container",
                 className="row container-display",
