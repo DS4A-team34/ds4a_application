@@ -41,22 +41,6 @@ layout = html.Div(
                                 dash_table.DataTable(
                                     id='validation-table',
                                     columns=val_columns,
-                                    # data={},
-                                    # filter_action='custom',
-                                    # style_data = {
-                                    #     'overflow': 'hidden',
-                                    #     'textOverflow': 'ellipsis',
-                                    #     'maxWidth': 0
-                                    # },
-                                    # style_table={'overflowX': 'auto'},
-                                    # tooltip_data=[
-                                    #     {
-                                    #         column: {'value': str(value), 'type': 'markdown'}
-                                    #         for column, value in row.items()
-                                    #     } for row in table_df.to_dict('rows')
-                                    # ],
-                                    # row_selectable="multi",
-                                    # selected_rows=[],
                                 )
                             ],
                             className="row flex-display",
