@@ -37,7 +37,7 @@ layout = html.Div(
 
             html.Div(id="select-container", children=[
                     html.P(
-                        id="chart-selector", children="Selecciona la entidad:"),
+                        id="chart-selector", children="Filtrar por entidad:"),
                     dcc.Dropdown(id="entidad-dropdown",
                                 options=[
                                     {'label': i, 'value': i} for i in available_indicators],
@@ -49,7 +49,7 @@ layout = html.Div(
             html.Div(id='select-grupo', children=[
 
                 html.P(
-                    id="text-grupo", className="control_label", children="Selecciona el Grupo:"),
+                    id="text-grupo", className="control_label", children="Filtrar por grupo del contrato:"),
                 dcc.RadioItems(id='radio-item-grupo',
                                className="dcc_control",
                                options=grupo_options,
@@ -62,15 +62,15 @@ layout = html.Div(
 
         html.Div(id='contenedor', children=[
             html.Div(id='valor-contrato', children=[
-                html.H1(id='vc1', children=" Total Valor Contrato"),
+                html.H1(id='vc1', children=" Totoal valor cuantías"),
                 html.H2(id='total-valor-contrato-text', className="valor-text"),
             ],),
             html.Div(id='valor-contrato1', children=[
-                html.H1(id='vc2', children=" Total Valor Contrato con adiciones"),
+                html.H1(id='vc2', children=" Total valor cuantía con adiciones"),
                 html.H2(id='total-valor-adiciones-text', className="valor-text"),
             ],),
             html.Div(id='valor-contrato2', children=[
-                html.H1(id='vc3', children=" Porcentaje de inconsistencias"),
+                html.H1(id='vc3', children=" Porcentaje promedio de similitud"),
                 daq.GraduatedBar(
                     id='ooc_graph_id',
                     color={

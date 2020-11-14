@@ -7,6 +7,8 @@ import pathlib
 import pickle
 import urllib.request
 
+import boto3
+import botocore
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -389,15 +391,105 @@ def display_confirm(n_clicks):
         return True
     return False
 
+
+def get_boto3_client() -> boto3.client:
+    client = boto3.client('s3',
+                          aws_access_key_id=settings.AWS['ACCESS_KEY_ID'], 
+                          aws_secret_access_key=settings.AWS['SECRET_ACCESS_KEY'])
+    return client
+
+
+def get_boto3_resource() -> boto3.resource:
+    resource = boto3.resource('s3',
+                          aws_access_key_id=settings.AWS['ACCESS_KEY_ID'], 
+                          aws_secret_access_key=settings.AWS['SECRET_ACCESS_KEY'])
+    return resource
+
+
+def get_contract_document_info(uuid: str):
+    document_df = pd.read_sql(
+        f'''
+        SELECT folder_original, file_basename_original, file_extension, pages, document_type
+        FROM doc_contrato
+        WHERE uuid = '{uuid}'
+        ''', engine)
+    
+    return document_df.iloc[0].to_dict() if not document_df.empty else {}
+
+
 @app.callback([Output('inspect-dialog', 'message'),
-               Output('inspect-dialog', 'displayed')],
+               Output('inspect-dialog', 'displayed'),
+               Output('iframe-contract-file', 'data'),
+               Output('iframe-contract-extracted', 'src'),
+               Output('validation-table', 'data')],
               [Input('button-inspect', 'n_clicks')],
               [State('input-uuid', 'value')],
             )
 def update_inspect_dialog(n_clicks, uuid: str):
-    message = f'Inspecting contract {uuid}'
-    show = False if n_clicks else False
-    return message, show
+    # ideal scenario won't show message
+    show = False
+    message = ''
+
+    # define deafult values
+    local_pdf = None
+    html_url = None
+    data = None
+
+    # initial state
+    if not uuid:
+        return show, message, local_pdf, html_url, data
+
+    # get document info
+    document = get_contract_document_info(uuid)
+    if not document:
+        show = True
+        message = f'No se registran documentos en el sistema para {uuid}'
+
+        return show, message, local_pdf, html_url, data
+    
+    # retrieve validation data
+    validation_df = pd.read_sql(
+        f'''
+        select c."nombreCampo", valorbd, valordoc, coincidencia 
+        from doc_validados v
+        join tipocampo c on c.id = v.tipocampo 
+        where uuid = '{uuid}'
+        ''', engine)
+    
+    data = validation_df.to_dict('records')
+    
+    s3_resource = get_boto3_resource()
+    s3_client = get_boto3_client()
+    
+    # compute files paths 
+    fullname_pdf = f"{document['folder_original']}/{document['file_basename_original']}"
+    fullname = fullname_pdf.replace(document['file_extension'], '')
+
+    # first pdf file
+    local_pdf = f"assets/temp.pdf"
+    try:
+        s3_client.download_file(settings.AWS['BUCKET_NAME'], fullname_pdf, local_pdf)
+    except Exception as e:
+        print(e)
+        show = True
+        local_pdf = None
+        message = f'Se ha presentado un error tratando de acceder al documento del contrato para {uuid}'
+
+        return show, message, local_pdf, html_url, data
+    
+    # now html file
+    fullname_html = fullname + '.html'
+    
+    try:
+        s3_resource.Object(settings.AWS['BUCKET_NAME'], fullname_html).load()
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == "404":
+            show = True
+            message = f'El registro {uuid} no ha sido procesado. Dirígase al módulo de auditoría.'
+    else:
+        html_url = f"{settings.AWS['BUCKET_URL']}/{fullname_html}"
+
+        return show, message, local_pdf, html_url, data
 
 
 def get_contract_validation_state(uuid: str):
