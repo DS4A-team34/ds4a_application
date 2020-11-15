@@ -467,6 +467,17 @@ def contratistas_top_bad_fig(df2):
 fig_top_contratistas_bad = contratistas_top_bad_fig(df2)
 
 
+# fields inconsistencias
+dfc = pd.read_sql(
+    '''
+    select c."nombreCampo", coincidencia 
+    from doc_validados v
+    join tipocampo c on c.id = v.tipocampo
+    ''', engine)
+figure_fields_incons = px.box(dfc, x="nombreCampo", y="coincidencia",
+                              title = 'Distribución de similaridad por campo')
+
+
 # INSPECTION BY SPECIFIC CONTRACT
 format_fields = {
     'money': [],

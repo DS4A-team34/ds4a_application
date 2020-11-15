@@ -40,8 +40,8 @@ layout = html.Div(
                             [
                                 html.Div(
                                     [
-                                        html.H3('Validation score'),
-                                        html.H4(id='validation-score'),   
+                                        html.H4('Validation score'),
+                                        html.H5(id='validation-score'),   
                                     ],
                                     id='validation-score-card',
                                     className="mini_container"

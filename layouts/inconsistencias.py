@@ -2,7 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_daq as daq
 
-from controls import df_x, grupo_dict, grupo_options, fig_top_contratistas_good, fig_top_contratistas_bad
+from controls import df_x, grupo_dict, grupo_options, fig_top_contratistas_good, fig_top_contratistas_bad, figure_fields_incons
 
 available_indicators = df_x.entidadnombre.unique()
 
@@ -31,10 +31,21 @@ def blank_fig(height):
         },
     }
 
+
 layout = html.Div(
     [
 
-        html.H2('Métricas generales de inconsistencias'),
+        html.H3('Métricas generales de inconsistencias'),
+
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="fields-inconsistencias", figure=figure_fields_incons)],
+                    className="pretty_container twelve columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
 
         html.Div(
             [
@@ -56,7 +67,7 @@ layout = html.Div(
         #     className="row flex-display",
         # ),
 
-        html.H2('Control de inconsistencias por entidades'),
+        html.H3('Control de inconsistencias por entidades'),
 
         html.Div(id='main-selector', children=[
 
@@ -87,15 +98,15 @@ layout = html.Div(
 
         html.Div(id='contenedor', children=[
             html.Div(id='valor-contrato', children=[
-                html.H3(id='vc1', children=" Total valor cuantías"),
-                html.H4(id='total-valor-contrato-text', className="valor-text"),
+                html.H4(id='vc1', children=" Total valor cuantías"),
+                html.H5(id='total-valor-contrato-text', className="valor-text"),
             ],),
             html.Div(id='valor-contrato1', children=[
-                html.H3(id='vc2', children=" Total valor cuantía con adiciones"),
-                html.H4(id='total-valor-adiciones-text', className="valor-text"),
+                html.H4(id='vc2', children=" Total valor cuantía con adiciones"),
+                html.H5(id='total-valor-adiciones-text', className="valor-text"),
             ],),
             html.Div(id='valor-contrato2', children=[
-                html.H3(id='vc3', children=" Porcentaje promedio de similitud"),
+                html.H4(id='vc3', children=" Porcentaje promedio de similitud"),
                 daq.GraduatedBar(
                     id='ooc_graph_id',
                     color={
@@ -112,8 +123,8 @@ layout = html.Div(
                 ),
             ],),
             html.Div(id='valor-contrato3', children=[
-                html.H3(id='vc4', children=" Cantidad de contratos"),
-                html.H4(id='total-cantidad-text', className="valor-text"),
+                html.H4(id='vc4', children=" Cantidad de contratos"),
+                html.H5(id='total-cantidad-text', className="valor-text"),
             ],),
 
         ], style={'columnCount': 2}),
