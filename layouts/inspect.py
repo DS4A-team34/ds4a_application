@@ -44,7 +44,8 @@ layout = html.Div(
                                         html.H4(id='validation-score'),   
                                     ],
                                     id='validation-score-card',
-                                    className="pretty_container two columns"
+                                    className="mini_container"
+                                    # className="pretty_container two columns"
                                 ),
                             ],
                             className='row flex-display'

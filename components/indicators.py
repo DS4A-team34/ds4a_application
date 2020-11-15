@@ -1,36 +1,36 @@
 import dash_core_components as dcc
 import dash_html_components as html
 
+map_variables = [
+    {'label': 'Coincidencia', 'value': 'coincidencia'},
+    {'label': 'Cantidad', 'value': 'cantidad'},
+]
+
 component = html.Div(
     [
-        # html.Div(
-        #     [
-        #         html.Div(
-        #             [html.H6(id="amnt-inconsistencies-text"), html.P("No. Inconsistencias")],
-        #             id="amnt-inconsistencies",
-        #             className="mini_container",
-        #         ),
-        #         html.Div(
-        #             [html.H6(id="pct-inconsistencies-text"), html.P("% Inconsistencias")],
-        #             id="pct-inconsistencies",
-        #             className="mini_container",
-        #         ),
-        #         html.Div(
-        #             [html.H6(id="avg-severity-text"), html.P("Severidad promedio")],
-        #             id="avg-severity",
-        #             className="mini_container",
-        #         ),
-        #         html.Div(
-        #             [html.H6(id="count-reviewed-text"), html.P("Procesos revisados")],
-        #             id="count-reviewed",
-        #             className="mini_container",
-        #         ),
-        #     ],
-        #     id="info-container",
-        #     className="row container-display",
-        # ),
+
         html.Div(
-            [dcc.Graph(id="contracts_map_plot")],
+            [
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.P('Variable a analizar:'),
+                                dcc.RadioItems(
+                                    id='map-variable',
+                                    options=map_variables,
+                                    value='cantidad',
+                                    labelStyle={'display': 'inline-block'}
+                                )
+                            ],
+                            className="pretty_container"
+                        )
+                    ],
+                    id="info-container",
+                    className="row container-display",
+                ),
+                html.P(id='map-title'),
+                dcc.Graph(id="contracts_map_plot")],
             id="countGraphContainer",
             className="pretty_container",
         ),

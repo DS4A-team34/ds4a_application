@@ -216,28 +216,34 @@ def filter_geo_dataframe(df, grupo_dropdown: list, estado_proceso_dropdown: list
 
 
 @app.callback(
-    Output('contracts_map_plot', 'figure'),
+    [
+        Output('contracts_map_plot', 'figure'),
+        Output('map-title', 'children')
+    ],
     [
         Input('grupo_dropdown', 'value'),
         Input('estado_proceso_dropdown', 'value'),
+        Input('map-variable', 'value'),
     ]
 )
-def update_map_plot(grupo_dropdown: list, estado_proceso_dropdown: list):
+def update_map_plot(grupo_dropdown: list, estado_proceso_dropdown: list, variable: str):
+    title = f'Concentración de {variable} por departamento'
+
     dff = filter_geo_dataframe(geo_df, grupo_dropdown, estado_proceso_dropdown)
 
-    dff = dff.groupby(by=['dpto', 'id'])['cantidad'].sum().reset_index()
+    dff = dff.groupby(by=['dpto', 'id'])[variable].sum().reset_index()
 
-    fig = px.choropleth_mapbox(dff, geojson=geo_json, locations='id', color='cantidad',
+    fig = px.choropleth_mapbox(dff, geojson=geo_json, locations='id', color=variable,
                            color_continuous_scale="Viridis",
-                           range_color=(0, max(dff.cantidad)),
+                           range_color=(0, dff[variable].max()),
                            mapbox_style="carto-positron",
                            zoom=4.5, center = {"lat": 4.60971, "lon": -74.08175},
                            hover_name='dpto',
                            opacity=0.5,
-                           title='Concentración de contratos por departamento'
+                           title=title
                           ).update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     
-    return fig
+    return fig, title
 
 # AUDITORÍA 
 operators = [['ge ', '>='],
@@ -348,6 +354,7 @@ def display_confirm(n_clicks, rows: list, data):
 
             validation_score = NER_contrato_textract(contract_df, full_path)
         except Exception as e:
+            print(e)
             message = f'Error inesperado procesando {uuid}'
         else:
             message = f'Procesamiento exitoso para {uuid}. \

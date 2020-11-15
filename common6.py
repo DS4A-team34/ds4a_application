@@ -979,7 +979,8 @@ def NER_contrato_textract(df, contract_path):
 
     def startJob(s3BucketName, objectName):
         response = None
-        client = boto3.client('textract')
+        client =  boto3.client('textract', aws_access_key_id=aws_access_key_id,
+                    aws_secret_access_key=aws_secret_access_key, region_name=region_name)
         response = client.start_document_text_detection(
         DocumentLocation={
             'S3Object': {
@@ -992,7 +993,8 @@ def NER_contrato_textract(df, contract_path):
 
     def isJobComplete(jobId):
         time.sleep(5)
-        client = boto3.client('textract')
+        client = boto3.client('textract', aws_access_key_id=aws_access_key_id,
+                    aws_secret_access_key=aws_secret_access_key, region_name=region_name)
         response = client.get_document_text_detection(JobId=jobId)
         status = response["JobStatus"]
         print("Job status: {}".format(status))
@@ -1011,7 +1013,8 @@ def NER_contrato_textract(df, contract_path):
 
         time.sleep(5)
 
-        client = boto3.client('textract')
+        client = boto3.client('textract', aws_access_key_id=aws_access_key_id,
+                    aws_secret_access_key=aws_secret_access_key, region_name=region_name)
         response = client.get_document_text_detection(JobId=jobId)
         
         pages.append(response)
