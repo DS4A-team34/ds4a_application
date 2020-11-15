@@ -10,7 +10,7 @@ layout = html.Div(
         html.Div(
             html.Div(
                 [
-                    html.Div(id='selected-rows', style={'display': 'none'}),
+                    html.Div(id='selected-rows', style={'display': 'none'}, children=[]),
                     html.Div(
                         [html.H6(id="count-reviewed-text", children=validation_state), html.P("Procesos revisados")],
                         id="count-reviewed",

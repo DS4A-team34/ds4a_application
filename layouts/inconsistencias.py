@@ -2,7 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_daq as daq
 
-from controls import df_x, grupo_dict, grupo_options
+from controls import df_x, grupo_dict, grupo_options, fig_top_contratistas_good, fig_top_contratistas_bad
 
 available_indicators = df_x.entidadnombre.unique()
 
@@ -33,6 +33,8 @@ def blank_fig(height):
 
 layout = html.Div(
     [
+        html.H2('Control de inconsistencias por entidades'),
+
         html.Div(id='main-selector', children=[
 
             html.Div(id="select-container", children=[
@@ -92,5 +94,27 @@ layout = html.Div(
             ],),
 
         ], style={'columnCount': 2}),
+
+        html.H2('Métricas generales de inconsistencias'),
+
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="contratistas-bad", figure=fig_top_contratistas_bad)],
+                    className="pretty_container twelve columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
+        
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="contratistas-goof", figure=fig_top_contratistas_good)],
+                    className="pretty_container twelve columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
     ]
 )

@@ -1,3 +1,5 @@
+import settings
+
 
 def NER_contrato_text(df, text, contract_text_path):
     #Function that performs 

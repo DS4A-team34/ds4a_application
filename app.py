@@ -24,6 +24,7 @@ from controls import table_df, tipo_proceso_dict, datevalues, grupo_dict, munici
 from dash.exceptions import PreventUpdate
 from layouts import data, files, graphs, inspect, inconsistencias
 from flask import Flask, render_template, request
+from common6 import NER_contrato_textract
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
@@ -77,9 +78,9 @@ app.layout = html.Div(
         dcc.Tabs(id='tabs-control', value='graphs', children=[
             dcc.Tab(label='Dahboard General', value='graphs'),
             dcc.Tab(label='Dahboard Inconsistencias', value='inconsistencias'),
-            dcc.Tab(label='Auditoría', value='contracts'),
+            dcc.Tab(label='Procesamiento', value='contracts'),
             dcc.Tab(label='Inspección', value='inspect'),
-            dcc.Tab(label='Gestor de archivos', value='files'),
+            dcc.Tab(label='Gestor de documentos', value='files'),
         ]),
 
         # content will be rendered in this element
@@ -374,22 +375,43 @@ def update_selected_contracts_text(selected_rows):
     return len(selected_rows)
 
 
-@app.callback(
-    Output('process-dialog', 'message'),
-    [Input('selected-rows', 'children'),]
-)
+# @app.callback(
+#     Output('process-dialog', 'message'),
+#     [Input('selected-rows', 'children'),]
+# )
 def update_dialog_text_selected_rows(selected_rows):
     # uuid_selected = table_df.iloc[selected_columns]['uuid']
     dialog = f"Selected rows: {selected_rows}"
     return dialog
 
 
-@app.callback(Output('process-dialog', 'displayed'),
-              [Input('button-process', 'n_clicks')])
-def display_confirm(n_clicks):
-    if n_clicks:
-        return True
-    return False
+@app.callback([Output('process-dialog', 'displayed'),
+               Output('process-dialog', 'message')],
+              [Input('button-process', 'n_clicks')],
+              [State('selected-rows', 'children'),
+              State('contracts-table', 'data')])
+def display_confirm(n_clicks, rows: list, data):
+    if not rows:
+        return False, None
+    
+    show = True
+    dff = pd.DataFrame(data)
+    for r in rows:
+        try:
+            contract_df = dff.iloc[r].copy()
+            uuid = contract_df['uuid']
+
+            document = get_contract_document_info(uuid)
+            full_path = f"{document['folder_original']}/{document['file_basename_original']}"
+
+            validation_score = NER_contrato_textract(contract_df, full_path)
+        except Exception as e:
+            message = f'Error inesperado procesando {uuid}'
+        else:
+            message = f'Procesamiento exitoso para {uuid}. \
+                Validation score: {round(validation_score * 100, 3)}%. Puede dirigirse a la pestaña de Inspección.'
+    
+    return show, message
 
 
 def get_boto3_client() -> boto3.client:
@@ -500,18 +522,16 @@ def update_inspect_dialog(n_clicks, uuid: str):
     try:
         s3_resource.Object(settings.AWS['BUCKET_NAME'], fullname_html).load()
     except botocore.exceptions.ClientError as e:
-        pass
+        print(e)
+        show = True
+        html_url = None
+        message = f'No es posible encontrar el archivo resultante de la exttracción para {uuid}'
+
+        return show, message, local_pdf, html_url, data, val_score, style
     else:
         html_url = f"{settings.AWS['BUCKET_URL']}/{fullname_html}"
 
         return show, message, local_pdf, html_url, data, val_score, style
-
-
-def get_contract_validation_state(uuid: str):
-    pass
-
-def get_contract_path(uuid: str):
-    pass
 
 
 # INCONSISTENCIAS

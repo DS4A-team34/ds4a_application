@@ -1,19 +1,18 @@
 import json
 
 import dash_table.FormatTemplate as FormatTemplate
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from pandas.tseries.offsets import DateOffset
+from plotly.subplots import make_subplots
 from sqlalchemy import create_engine
 
 import settings
 
 # create database connection
 engine = create_engine(settings.DATABASE['CONNECTION'], max_overflow=20)
-
-# READ FILES
-# df = pd.read_csv('data/reduced_data.csv')
 
 # Table section
 limit = 100000
@@ -85,7 +84,8 @@ df_files = pd.read_pickle(filename_files)
 grupos = table_df['grupoid'].unique()
 grupo_df = pd.read_sql_table('secop1grupo', engine)
 grupo_dict = dict(zip(grupo_df['grupoid'], grupo_df['nombregrupo']))
-grupo_options = [{"label": v, "value": k} for k, v in grupo_dict.items() if k in grupos]
+grupo_options = [{"label": v, "value": k}
+                 for k, v in grupo_dict.items() if k in grupos]
 
 # TODO: create "estado_proceso" table
 estado_proceso_dict = {e: e for e in sorted(
@@ -186,8 +186,8 @@ tipo_campo_dict = dict(zip(tipo_campo_df['id'], tipo_campo_df['nombreCampo']))
 tipo_campo_options = [{"label": v, "value": k}
                       for k, v in tipo_proceso_dict.items()]
 
-# INCONSISTENCIAS
 
+# GENERAL
 df_x = pd.read_sql(
     '''
     SELECT procesoestatus, g.grupoid,  entidadnombre,
@@ -214,18 +214,245 @@ with open('data/colombia.json') as f:
 for i in range(0, 33):
     geo_json["features"][i]['id'] = str(i)
 
+
+# INCONSISTENCIAS
 df1 = pd.read_sql(
     '''
-    SELECT contratistarazsocial,  
+    SELECT entidadnombre,  
         sum(contratocuantia+contratoconadicionesvalor) contratocuantia,
         round(avg(coincidencia),3) coincidencia
     FROM public.doc_validados d, public.secop1validacion s, secop1general g 
     where d.uuid = s.uuid and s.uuid = g.uuid
-    group by contratistarazsocial
+    group by entidadnombre
     having round(avg(coincidencia),3) > 0.98 
     order by 3 
     limit 20
     ''', engine)
+
+
+def contratistas_top_good_fig(df1):
+    y_saving = df1['coincidencia']*100
+    y_net_worth = df1['contratocuantia']
+    x = df1['entidadnombre']
+
+    # Creating two subplots
+    fig = make_subplots(rows=1, cols=2, specs=[[{}, {}]], shared_xaxes=True,
+                        shared_yaxes=False, vertical_spacing=0.001)
+
+    fig.append_trace(go.Bar(
+        x=y_saving,
+        y=x,
+        marker=dict(
+            color='rgba(50, 171, 96, 0.6)',
+            line=dict(
+                color='rgba(50, 171, 96, 1.0)',
+                width=1),
+        ),
+        name='Porcentaje de coincidencia',
+        orientation='h',
+    ), 1, 1)
+
+    fig.append_trace(go.Scatter(
+        x=y_net_worth, y=x,
+        mode='lines+markers',
+        line_color='rgb(128, 0, 128)',
+        name='Cantidad total del valor contrato',
+    ), 1, 2)
+
+    fig.update_layout(
+        title='Entidades con mayor porcentaje de similitud',
+        yaxis=dict(
+            showgrid=False,
+            showline=False,
+            showticklabels=True,
+            domain=[0, 0.85],
+        ),
+        yaxis2=dict(
+            showgrid=False,
+            showline=True,
+            showticklabels=False,
+            linecolor='rgba(102, 102, 102, 0.8)',
+            linewidth=2,
+            domain=[0, 0.85],
+        ),
+        xaxis=dict(
+            zeroline=False,
+            showline=False,
+            showticklabels=True,
+            showgrid=True,
+            domain=[0.1, 0.42],
+        ),
+        xaxis2=dict(
+            zeroline=False,
+            showline=False,
+            showticklabels=True,
+            showgrid=True,
+            domain=[0.47, 1],
+            side='top',
+
+        ),
+        legend=dict(x=0.029, y=1.038, font_size=10),
+        margin=dict(l=100, r=20, t=70, b=70),
+        paper_bgcolor='rgb(248, 248, 255)',
+        plot_bgcolor='rgb(248, 248, 255)',
+    )
+
+    annotations = []
+
+    y_s = np.round(y_saving, decimals=2)
+    y_nw = np.rint(y_net_worth)
+
+    # Adding labels
+    for ydn, yd, xd in zip(y_nw, y_s, x):
+        # labeling the scatter savings
+        annotations.append(dict(xref='x2', yref='y2',
+                                y=xd, x=ydn - 20000,
+                                text='$'+'{:,}'.format(ydn),
+                                font=dict(family='Arial', size=12,
+                                          color='rgb(128, 0, 128)'),
+                                showarrow=False))
+        # labeling the bar net worth
+        annotations.append(dict(xref='x1', yref='y1',
+                                y=xd, x=yd + 20,
+                                text=str(yd) + '%',
+                                font=dict(family='Arial', size=12,
+                                          color='rgb(50, 171, 96)'),
+                                showarrow=False))
+    # Source
+    annotations.append(dict(xref='paper', yref='paper',
+                            x=0, y=-0.109,
+                            text='Compra eficiente ' +
+                                 '(2020), Team #34 DS4A, ',
+                            font=dict(family='Arial', size=10,
+                                      color='rgb(150,150,150)'),
+                            showarrow=False))
+
+    fig.update_layout(annotations=annotations)
+
+    return fig
+
+
+fig_top_contratistas_good = contratistas_top_good_fig(df1)
+
+df2 = pd.read_sql(
+    '''
+    SELECT entidadnombre,  
+        sum(contratocuantia+contratoconadicionesvalor) contratocuantia,
+        round(avg(coincidencia),3) coincidencia
+    FROM public.doc_validados d, public.secop1validacion s, secop1general g 
+    where d.uuid = s.uuid and s.uuid = g.uuid
+    group by entidadnombre
+    having round(avg(coincidencia),3) < 0.8 
+    order by 3 
+    limit 20
+    ''', engine)
+
+
+def contratistas_top_bad_fig(df2):
+    entidad = 'entidadnombre'
+    # entidad = 'contratistarazsocial'
+
+    y_saving = df2['coincidencia']*100
+    y_net_worth =df2['contratocuantia']
+    x = df2[entidad]
+
+    # Creating two subplots
+    fig = make_subplots(rows=1, cols=2, specs=[[{}, {}]], shared_xaxes=True,
+                        shared_yaxes=False, vertical_spacing=0.001)
+
+    fig.append_trace(go.Bar(
+        x=y_saving,
+        y=x,
+        marker=dict(
+            color='rgba(50, 171, 96, 0.6)',
+            line=dict(
+                color='rgba(50, 171, 96, 1.0)',
+                width=1),
+        ),
+        name='Porcentaje de coincidencia',
+        orientation='h',
+    ), 1, 1)
+
+    fig.append_trace(go.Scatter(
+        x=y_net_worth, y=x,
+        mode='lines+markers',
+        line_color='rgb(128, 0, 128)',
+        name='Cantidad total del valor contrato',
+    ), 1, 2)
+
+    fig.update_layout(
+        title='Entidades con menor porcentaje de similitud',
+        yaxis=dict(
+            showgrid=False,
+            showline=False,
+            showticklabels=True,
+            domain=[0, 0.85],
+        ),
+        yaxis2=dict(
+            showgrid=False,
+            showline=True,
+            showticklabels=False,
+            linecolor='rgba(102, 102, 102, 0.8)',
+            linewidth=2,
+            domain=[0, 0.85],
+        ),
+        xaxis=dict(
+            zeroline=False,
+            showline=False,
+            showticklabels=True,
+            showgrid=True,
+            domain=[0.2, 0.42],
+        ),
+        xaxis2=dict(
+            zeroline=False,
+            showline=False,
+            showticklabels=True,
+            showgrid=True,
+            domain=[0.47, 1],
+            side='top',
+
+        ),
+        legend=dict(x=0.029, y=1.038, font_size=10),
+        margin=dict(l=100, r=20, t=70, b=70),
+        paper_bgcolor='rgb(248, 248, 255)',
+        plot_bgcolor='rgb(248, 248, 255)',
+    )
+
+    annotations = []
+
+    y_s = np.round(y_saving, decimals=2)
+    y_nw = np.rint(y_net_worth)
+
+    # Adding labels
+    for ydn, yd, xd in zip(y_nw, y_s, x):
+        # labeling the scatter savings
+        annotations.append(dict(xref='x2', yref='y2',
+                                y=xd, x=ydn - 20000,
+                                text='$'+'{:,}'.format(ydn) ,
+                                font=dict(family='Arial', size=12,
+                                        color='rgb(128, 0, 128)'),
+                                showarrow=False))
+        # labeling the bar net worth
+        annotations.append(dict(xref='x1', yref='y1',
+                                y=xd, x=yd +5,
+                                text=str(yd) + '%',
+                                font=dict(family='Arial', size=12,
+                                        color='rgb(50, 171, 96)'),
+                                showarrow=False))
+    # Source
+    annotations.append(dict(xref='paper', yref='paper',
+                            x=0, y=-0.109,
+                            text='Compra eficiente ' +
+                                '(2020), Team #34 DS4A, ',
+                            font=dict(family='Arial', size=10, color='rgb(150,150,150)'),
+                            showarrow=False))
+
+    fig.update_layout(annotations=annotations)
+
+    return fig
+
+
+fig_top_contratistas_bad = contratistas_top_bad_fig(df2)
 
 
 # INSPECTION BY SPECIFIC CONTRACT
