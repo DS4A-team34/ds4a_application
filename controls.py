@@ -475,7 +475,7 @@ dfc = pd.read_sql(
     join tipocampo c on c.id = v.tipocampo
     ''', engine)
 figure_fields_incons = px.box(dfc, x="nombreCampo", y="coincidencia",
-                              title = 'Distribución de similaridad por campo')
+                              title = 'Distribución de similitud por campo')
 
 
 # INSPECTION BY SPECIFIC CONTRACT
