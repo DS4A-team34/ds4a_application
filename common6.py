@@ -6,14 +6,15 @@ def NER_contrato_text(df, text, contract_text_path):
     import logging
     from io import StringIO 
     import os
+    import settings
     
     import boto3
     from botocore.exceptions import ClientError
     import time
     
     ## Bucket de Alexis
-    aws_access_key_id="AKIAZ7JA337WYTRP5TVZ"
-    aws_secret_access_key="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"
+    aws_access_key_id = settings.AWS['ACCESS_KEY_ID']
+    aws_secret_access_key = settings.AWS['SECRET_ACCESS_KEY']
     region_name = "us-east-2"
     bucket = "bootcampaws315"
     
