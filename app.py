@@ -74,11 +74,11 @@ app.layout = html.Div(
         header.component,
 
         dcc.Tabs(id='tabs-control', value='graphs', children=[
-            dcc.Tab(label='Dahboard General', value='graphs'),
-            dcc.Tab(label='Dahboard Inconsistencias', value='inconsistencias'),
-            dcc.Tab(label='Procesamiento', value='contracts'),
-            dcc.Tab(label='Inspección', value='inspect'),
-            dcc.Tab(label='Gestor de documentos', value='files'),
+            dcc.Tab(label='Explorar', value='graphs'),
+            dcc.Tab(label='Procesar', value='contracts'),
+            dcc.Tab(label='Validar', value='inspect'),
+            dcc.Tab(label='Identificar Inconsistencias', value='inconsistencias'),
+            # dcc.Tab(label='Gestor de documentos', value='files'),
         ]),
 
         # content will be rendered in this element
@@ -281,7 +281,8 @@ def split_filter_part(filter_part):
 
 
 @app.callback(
-    Output('contracts-table', "data"),
+    [Output('contracts-table', "data"),
+     Output('contracts-table', 'tooltip_data')],
     [Input('contracts-table', "filter_query")])
 def update_table(filter):
     try:
@@ -299,8 +300,14 @@ def update_table(filter):
                 # this is a simplification of the front-end filtering logic,
                 # only works with complete fields in standard format
                 dff = dff.loc[dff[col_name].str.startswith(filter_value)]
-
-        return dff.to_dict('records')
+        
+        data = dff.to_dict('records')
+        tooltip = [{
+            column: {'value': str(value), 'type': 'markdown'}
+            for column, value in row.items()
+        } for row in data]
+        
+        return data, tooltip
     except AttributeError:
         raise PreventUpdate
 

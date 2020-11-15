@@ -23,6 +23,18 @@ table_df = pd.read_sql(
     WHERE v.uuid = c.uuid and g.uuid = v.uuid and dc.uuid  = v.uuid and dc.document_type = '13'
     ''', engine)
 
+# table_df = pd.read_sql(
+#     f'''
+#     with coincidencias as (
+#         select uuid, round(avg(coincidencia), 3) validationscore
+#         from doc_validados dv 
+#         group by uuid
+#     )
+#     SELECT v.*, procesado, dc.pages, validationscore, municipioejecuta, municipioentrega, c.fechacargasecop, g.grupoid, procesoid
+#     FROM secop1validacion v, secop1contrato c, secop1general g, doc_contrato dc, doc_validados dv, coincidencias vs
+#     WHERE v.uuid = c.uuid and g.uuid = v.uuid and dc.uuid  = v.uuid and dc.document_type = '13' and vs.uuid = v.uuid
+#     ''', engine)
+
 # get dates range
 min_date_cargue = table_df['fechacargasecop'].min()
 max_date_cargue = table_df['fechacargasecop'].max()

@@ -33,6 +33,29 @@ def blank_fig(height):
 
 layout = html.Div(
     [
+
+        html.H2('Métricas generales de inconsistencias'),
+
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="contratistas-bad", figure=fig_top_contratistas_bad)],
+                    className="pretty_container twelve columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
+        
+        # html.Div(
+        #     [
+        #         html.Div(
+        #             [dcc.Graph(id="contratistas-good", figure=fig_top_contratistas_good)],
+        #             className="pretty_container twelve columns",
+        #         ),
+        #     ],
+        #     className="row flex-display",
+        # ),
+
         html.H2('Control de inconsistencias por entidades'),
 
         html.Div(id='main-selector', children=[
@@ -94,27 +117,5 @@ layout = html.Div(
             ],),
 
         ], style={'columnCount': 2}),
-
-        html.H2('Métricas generales de inconsistencias'),
-
-        html.Div(
-            [
-                html.Div(
-                    [dcc.Graph(id="contratistas-bad", figure=fig_top_contratistas_bad)],
-                    className="pretty_container twelve columns",
-                ),
-            ],
-            className="row flex-display",
-        ),
-        
-        html.Div(
-            [
-                html.Div(
-                    [dcc.Graph(id="contratistas-goof", figure=fig_top_contratistas_good)],
-                    className="pretty_container twelve columns",
-                ),
-            ],
-            className="row flex-display",
-        ),
     ]
 )

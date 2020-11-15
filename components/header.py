@@ -5,8 +5,8 @@ component = html.Div(
         html.Div(
             [
                 html.Img(
-                    src="../assets/ds4a.png",
-                    id="ds4a-image",
+                    src="../assets/cce.png",
+                    id="cce-image",
                     style={
                         "height": "60px",
                         "width": "auto",
@@ -21,12 +21,12 @@ component = html.Div(
                 html.Div(
                     [
                         html.H3(
-                            "DS4A 3.0 - Team 34",
+                            "Colombia Compra Eficiente",
                             style={"margin-bottom": "0px"},
                         ),
-                        html.A(
-                            html.H5("Colombia Compra Eficiente", style={"margin-top": "0px"}),
-                            href='https://www.colombiacompra.gov.co/'
+                        html.H5(
+                            "Validating Public Purchasing Data", 
+                            style={"margin-top": "0px"}
                         )
                     ]
                 )
