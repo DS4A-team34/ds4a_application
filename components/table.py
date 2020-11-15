@@ -20,4 +20,14 @@ component = dash_table.DataTable(
     ],
     row_selectable="multi",
     selected_rows=[],
+    style_data_conditional=[
+        {
+            'if': {
+                'filter_query': '{procesado} = 1',
+                # 'column_id': 'procesado'
+            },
+            'backgroundColor': 'green',
+            'color': 'white'
+        },
+    ]
 )

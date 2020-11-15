@@ -1,7 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 
-from controls import grupo_options, grupo_dict, estado_proceso_dict, estado_proceso_options, table_df, tags, datevalues
+from controls import grupo_options, grupo_dict, estado_proceso_dict, estado_proceso_options, table_df, tags, datevalues, dates_amount
 
 component = html.Div(
     [
@@ -12,8 +12,8 @@ component = html.Div(
         dcc.RangeSlider(
             id="year_slider",
             min=1,
-            max=12,
-            value=[1, 12],
+            max=dates_amount,
+            value=[1, dates_amount],
             marks=tags,
             className="dcc_control",
         ),

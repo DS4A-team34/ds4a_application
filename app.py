@@ -417,11 +417,13 @@ def get_contract_document_info(uuid: str):
     return document_df.iloc[0].to_dict() if not document_df.empty else {}
 
 
-@app.callback([Output('inspect-dialog', 'message'),
-               Output('inspect-dialog', 'displayed'),
+@app.callback([Output('inspect-dialog', 'displayed'),
+               Output('inspect-dialog', 'message'),
                Output('iframe-contract-file', 'data'),
                Output('iframe-contract-extracted', 'src'),
-               Output('validation-table', 'data')],
+               Output('validation-table', 'data'),
+               Output('validation-score', 'children'),
+               Output('validation-score-card', 'style')],
               [Input('button-inspect', 'n_clicks')],
               [State('input-uuid', 'value')],
             )
@@ -434,10 +436,12 @@ def update_inspect_dialog(n_clicks, uuid: str):
     local_pdf = None
     html_url = None
     data = None
+    val_score = 0
+    style = None
 
     # initial state
     if not uuid:
-        return show, message, local_pdf, html_url, data
+        return show, message, local_pdf, html_url, data, val_score, style
 
     # get document info
     document = get_contract_document_info(uuid)
@@ -445,7 +449,7 @@ def update_inspect_dialog(n_clicks, uuid: str):
         show = True
         message = f'No se registran documentos en el sistema para {uuid}'
 
-        return show, message, local_pdf, html_url, data
+        return show, message, local_pdf, html_url, data, val_score, style
     
     # retrieve validation data
     validation_df = pd.read_sql(
@@ -456,7 +460,20 @@ def update_inspect_dialog(n_clicks, uuid: str):
         where uuid = '{uuid}'
         ''', engine)
     
-    data = validation_df.to_dict('records')
+    if not validation_df.empty:
+        val_score = validation_df['coincidencia'].mean()
+        style = {'background-color': 'red'}
+        if val_score >= 0.9:
+            style = {'background-color': 'green'}
+        elif 0.6 < val_score < 0.9:
+            style = {'background-color': 'yellow'}
+        
+        val_score = f'{round(val_score * 100, 3)}%'
+        
+        data = validation_df.to_dict('records')
+    else:
+        show = True
+        message = f'El registro {uuid} no ha sido procesado. Dirígase al módulo de auditoría.'
     
     s3_resource = get_boto3_resource()
     s3_client = get_boto3_client()
@@ -473,9 +490,9 @@ def update_inspect_dialog(n_clicks, uuid: str):
         print(e)
         show = True
         local_pdf = None
-        message = f'Se ha presentado un error tratando de acceder al documento del contrato para {uuid}'
+        message = f'No es posible encontrar el documento del contrato {uuid}'
 
-        return show, message, local_pdf, html_url, data
+        return show, message, local_pdf, html_url, data, val_score, style
     
     # now html file
     fullname_html = fullname + '.html'
@@ -483,13 +500,11 @@ def update_inspect_dialog(n_clicks, uuid: str):
     try:
         s3_resource.Object(settings.AWS['BUCKET_NAME'], fullname_html).load()
     except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == "404":
-            show = True
-            message = f'El registro {uuid} no ha sido procesado. Dirígase al módulo de auditoría.'
+        pass
     else:
         html_url = f"{settings.AWS['BUCKET_URL']}/{fullname_html}"
 
-        return show, message, local_pdf, html_url, data
+        return show, message, local_pdf, html_url, data, val_score, style
 
 
 def get_contract_validation_state(uuid: str):

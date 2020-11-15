@@ -38,13 +38,53 @@ layout = html.Div(
                     [
                         html.Div(
                             [
-                                dash_table.DataTable(
-                                    id='validation-table',
-                                    columns=val_columns,
+                                html.Div(
+                                    [
+                                        dash_table.DataTable(
+                                            id='validation-table',
+                                            columns=val_columns,
+                                            style_data_conditional=[
+                                                {
+                                                    'if': {
+                                                        'filter_query': '{coincidencia} >= 0.9',
+                                                        'column_id': 'coincidencia'
+                                                    },
+                                                    'backgroundColor': 'green',
+                                                    'color': 'black'
+                                                },
+                                                {
+                                                    'if': {
+                                                        'filter_query': '{coincidencia} > 0.6 && {coincidencia} < 0.9',
+                                                        'column_id': 'coincidencia'
+                                                    },
+                                                    'backgroundColor': 'yellow',
+                                                    'color': 'black'
+                                                },
+                                                {
+                                                    'if': {
+                                                        'filter_query': '{coincidencia} <= 0.6',
+                                                        'column_id': 'coincidencia'
+                                                    },
+                                                    'backgroundColor': 'red',
+                                                    'color': 'black'
+                                                },
+                                            ]
+                                        ),
+                                    ],
+                                    className="eight columns"
+                                ),
+                                html.Div(
+                                    [
+                                        html.H3('Validation score'),
+                                        html.H4(id='validation-score'),   
+                                    ],
+                                    id='validation-score-card',
+                                    className="pretty_container"
                                 )
                             ],
                             className="row flex-display",
                         ),
+                        html.Br(),
                         html.Div(
                             [
                                 html.ObjectEl(

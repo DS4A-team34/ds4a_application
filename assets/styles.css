@@ -78,7 +78,7 @@ body {
 
 .iframe-contract {
   width: 50%;
-  height: 40em;
+  height: 60em;
 }
 
 #header {
@@ -152,8 +152,8 @@ body {
 /* INCONSISTENCIAS */
 
 #select-container{
-	background-color: #F0EFEE;
-	border-top: 2px solid #F51111;
+	background-color: #f9f9f9;
+	border-top: 2px solid #1975FA;
 	width: 50%;
 	/*<!--box-shadow: grey 5px 5px 5px ;-->*/
 	box-shadow: 5px 5px 5px slategrey;
@@ -166,8 +166,8 @@ body {
 	}
 
 #select-grupo{
-	background-color: #F0EFEE;
-	border-top: 2px solid #F51111;
+	background-color: #f9f9f9;
+	border-top: 2px solid #1975FA;
 	width: 50%;
 	/*<!--box-shadow: grey 5px 5px 5px ;-->*/
 	box-shadow: 5px 5px 5px slategrey;
@@ -180,8 +180,8 @@ body {
 	}
 
 #valor-contrato{
-	border-top: 2px solid #05016B;
-	background-color: #F0EFEE;
+	border-top: 2px solid #1975FA;
+	background-color: #f9f9f9;
 	width: 90%;
 	box-shadow: 5px 5px 5px slategrey;
 	border-radius: 5px;
@@ -189,39 +189,40 @@ body {
 	margin-bottom: 10%;
 	margin-left: 10%;
 	margin-right: 10%;
-    padding: 1%;
+  padding: 1%;
 	
 }
-#valor-contrato1{border-top: 2px solid #E100D9;
-	background-color: #F0EFEE;
+#valor-contrato1{
+  border-top: 2px solid #1975FA;
+	background-color: #f9f9f9;
 	width: 90%;
 	box-shadow: 5px 5px 5px slategrey;
 	border-radius: 5px;
 	position: relative;
 	margin-bottom:  20%;
 	margin-left:10%;
-    padding: 1%;
+  padding: 1%;
 	
 }
 #valor-contrato2{
-	border-top: 2px solid #D06100;
-	background-color: #F0EFEE;
+	border-top: 2px solid #1975FA;
+	background-color: #f9f9f9;
 	width: 90%;
 	box-shadow: 5px 5px 5px slategrey;
 	border-radius: 5px;
 	position: relative;
 	margin: 10%;
-    padding: 1%;
+  padding: 1%;
 }
 #valor-contrato3{
-	border-top: 2px solid #00D10A;
-	background-color: #F0EFEE;
+	border-top: 2px solid #1975FA;
+	background-color: #f9f9f9;
 	width: 90%;
 	box-shadow: 5px 5px 5px slategrey;
 	border-radius: 5px;
 	position: relative;
 	margin: 10%;
-    padding: 1%;
+  padding: 1%;
 }
 
 .enMoney::before {
@@ -230,8 +231,6 @@ body {
 #total-valor-contrato-text3{
 	text-align: center;
 	font: bold 60px "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	
-	
 }
 
 #total-valor-contrato-text{

@@ -16,13 +16,12 @@ engine = create_engine(settings.DATABASE['CONNECTION'], max_overflow=20)
 # df = pd.read_csv('data/reduced_data.csv')
 
 # Table section
-limit = 10000
+limit = 100000
 table_df = pd.read_sql(
     f'''
-    SELECT v.*, municipioejecuta, municipioentrega, c.fechacargasecop, g.grupoid
-	FROM secop1validacion v, secop1contrato c, secop1general g
-	WHERE v.uuid = c.uuid and g.uuid = v.uuid
-    LIMIT {limit}
+    SELECT v.*, procesado, municipioejecuta, municipioentrega, c.fechacargasecop, g.grupoid, procesoid
+    FROM secop1validacion v, secop1contrato c, secop1general g, doc_contrato dc 
+    WHERE v.uuid = c.uuid and g.uuid = v.uuid and dc.uuid  = v.uuid and dc.document_type = '13'
     ''', engine)
 
 # get dates range
@@ -31,6 +30,7 @@ max_date_cargue = table_df['fechacargasecop'].max()
 
 dates_range = pd.date_range(start=min_date_cargue,
                             end=max_date_cargue, freq='M')
+dates_amount = len(dates_range)
 dlist = pd.DatetimeIndex(dates_range).normalize()
 tags = {}
 datevalues = {}
@@ -82,9 +82,10 @@ filename_files = 'data/df_files4B_pandas.pickle'
 df_files = pd.read_pickle(filename_files)
 
 # define dict and options for "grupo"
+grupos = table_df['grupoid'].unique()
 grupo_df = pd.read_sql_table('secop1grupo', engine)
 grupo_dict = dict(zip(grupo_df['grupoid'], grupo_df['nombregrupo']))
-grupo_options = [{"label": v, "value": k} for k, v in grupo_dict.items()]
+grupo_options = [{"label": v, "value": k} for k, v in grupo_dict.items() if k in grupos]
 
 # TODO: create "estado_proceso" table
 estado_proceso_dict = {e: e for e in sorted(
@@ -93,11 +94,12 @@ estado_proceso_options = [{"label": v, "value": k}
                           for k, v in estado_proceso_dict.items()]
 
 # define dict and options for "tipo de proceso"
+procesos = table_df['procesoid'].unique()
 tipo_proceso_df = pd.read_sql_table('secop1proceso', engine)
 tipo_proceso_dict = dict(
     zip(tipo_proceso_df['procesoid'], tipo_proceso_df['procesotipo']))
 tipo_proceso_options = [{"label": v, "value": k}
-                        for k, v in tipo_proceso_dict.items()]
+                        for k, v in tipo_proceso_dict.items() if k in procesos]
 
 
 # define Municipio options
@@ -212,14 +214,18 @@ with open('data/colombia.json') as f:
 for i in range(0, 33):
     geo_json["features"][i]['id'] = str(i)
 
-# fig = px.choropleth_mapbox(geo_df, geojson=geo_json, locations='id', color='cantidad',
-#                            color_continuous_scale="Viridis",
-#                            range_color=(0, max(geo_df.cantidad)),
-#                            mapbox_style="carto-darkmatter",
-#                            zoom=4.5, center = {"lat": 4.60971, "lon": -74.08175},
-#                            hover_name='dpto',
-#                            opacity=0.5
-#                           ).update_layout(margin={"r":0,"t":0,"l":0,"b":0},template="plotly_dark")
+df1 = pd.read_sql(
+    '''
+    SELECT contratistarazsocial,  
+        sum(contratocuantia+contratoconadicionesvalor) contratocuantia,
+        round(avg(coincidencia),3) coincidencia
+    FROM public.doc_validados d, public.secop1validacion s, secop1general g 
+    where d.uuid = s.uuid and s.uuid = g.uuid
+    group by contratistarazsocial
+    having round(avg(coincidencia),3) > 0.98 
+    order by 3 
+    limit 20
+    ''', engine)
 
 
 # INSPECTION BY SPECIFIC CONTRACT
@@ -231,7 +237,7 @@ format_fields = {
 
 val_column_representations = {
     'nombreCampo': 'Nombre del campo',
-    'valordb': 'Valor registrado',
+    'valorbd': 'Valor registrado',
     'valordoc': 'Valor en documento',
     'coincidencia': 'Similitud'
 }
