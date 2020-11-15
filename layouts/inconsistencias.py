@@ -2,7 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_daq as daq
 
-from controls import df_x, grupo_dict, grupo_options, fig_top_contratistas_good, fig_top_contratistas_bad, figure_fields_incons
+from controls import df_x, grupo_dict, grupo_options, fig_top_contratistas_good, fig_top_contratistas_bad, figure_fields_incons,figure_similarity
 
 available_indicators = df_x.entidadnombre.unique()
 
@@ -36,6 +36,16 @@ layout = html.Div(
     [
 
         html.H3('Métricas generales de inconsistencias'),
+
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="avg-similarity", figure=figure_similarity)],
+                    className="pretty_container twelve columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
 
         html.Div(
             [

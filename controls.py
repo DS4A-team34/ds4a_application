@@ -478,6 +478,16 @@ figure_fields_incons = px.box(dfc, x="nombreCampo", y="coincidencia",
                               title = 'Distribución de similitud por campo')
 
 
+similarity_avg_df = pd.read_sql(
+    '''
+    select uuid, avg(coincidencia)
+    from doc_validados dv 
+    group by uuid
+    ''', engine)
+figure_similarity = px.box(similarity_avg_df, x="avg",
+                              title = 'Distribución de similitud de contratos procesados')
+
+
 # INSPECTION BY SPECIFIC CONTRACT
 format_fields = {
     'money': [],
