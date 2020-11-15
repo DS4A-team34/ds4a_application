@@ -3,6 +3,8 @@ import copy
 import datetime as dt
 import math
 import os
+import glob
+import uuid as u
 import pathlib
 import pickle
 import urllib.request
@@ -56,10 +58,6 @@ layout = dict(
     ),
 )
 
-@app.server.route('/contracts/<string:uuid>', methods=['GET'])
-def contract(uuid: str):
-    if request.method == 'GET':
-        return render_template('contract.html', uuid=uuid)
 
 app.title = 'DS4A 3.0 - Team #34'
 
@@ -113,7 +111,6 @@ def update_content(value):
         'inspect': inspect.layout,
         'inconsistencias': inconsistencias.layout
     }
-    # value = 'inspect' if n_clicks else value
     
     return content_dict.get(value, graphs.layout)
 
@@ -138,61 +135,6 @@ def filter_dataframe(df, year_slider: list, grupo_dropdown: list, estado_proceso
 def update_date_range(value: list):
     return f"Rango de fechas: {value[0]} - {value[-1]}"
 
-@app.callback(
-    Output('amnt-inconsistencies-text', 'children'),
-    [
-        Input('year_slider', 'value'),
-        Input('grupo_dropdown', 'value'),
-        Input('estado_proceso_dropdown', 'value'),
-    ]
-)
-def update_amnt_inconsistencies(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    import random
-    dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
-    return random.randint(0, len(dff) / 2)
-
-
-@app.callback(
-    Output('pct-inconsistencies-text', 'children'),
-    [
-        Input('year_slider', 'value'),
-        Input('grupo_dropdown', 'value'),
-        Input('estado_proceso_dropdown', 'value'),
-    ]
-)
-def update_pct_inconsistencies(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    import random
-    dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
-    return f'{random.randint(0, 100)}%'
-
-
-@app.callback(
-    Output('avg-severity-text', 'children'),
-    [
-        Input('year_slider', 'value'),
-        Input('grupo_dropdown', 'value'),
-        Input('estado_proceso_dropdown', 'value'),
-    ]
-)
-def update_avg_severity(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    import random
-    dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
-    return random.randint(0, 5)
-
-
-@app.callback(
-    Output('count-reviewed-text', 'children'),
-    [
-        Input('year_slider', 'value'),
-        Input('grupo_dropdown', 'value'),
-        Input('estado_proceso_dropdown', 'value'),
-    ]
-)
-def update_count_reviewed(year_slider: list, grupo_dropdown: list, estado_proceso_dropdown: list):
-    import random
-    # dff = filter_dataframe(table_df, year_slider, grupo_dropdown, estado_proceso_dropdown)
-    # count_reviewed = random.randint(1, len(dff))
-    return f'0/0'
 
 @app.callback(
     Output('contracts_deparment_plot', 'figure'),
@@ -473,6 +415,9 @@ def update_inspect_dialog(n_clicks, uuid: str):
 
         return show, message, local_pdf, html_url, data, val_score, style
     
+    for file in glob.glob('assets/*.pdf'):
+        os.remove(file)
+    
     # retrieve validation data
     validation_df = pd.read_sql(
         f'''
@@ -505,7 +450,7 @@ def update_inspect_dialog(n_clicks, uuid: str):
     fullname = fullname_pdf.replace(document['file_extension'], '')
 
     # first pdf file
-    local_pdf = f"assets/temp.pdf"
+    local_pdf = f"assets/{u.uuid4()}.pdf"
     try:
         s3_client.download_file(settings.AWS['BUCKET_NAME'], fullname_pdf, local_pdf)
     except Exception as e:

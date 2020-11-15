@@ -17,10 +17,10 @@ data/contracts
 data/reduced_data.csv
 data/df_files4B_pandas.pickle
 data/temporal.csv
+assets/styles1.txt
+assets/*.pdf
 
 # ignore sample app
 controls_original.py
 app_original.py
 appcon.py
-assets/styles1.txt
-assets/temp.pdf

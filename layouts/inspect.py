@@ -40,6 +40,19 @@ layout = html.Div(
                             [
                                 html.Div(
                                     [
+                                        html.H3('Validation score'),
+                                        html.H4(id='validation-score'),   
+                                    ],
+                                    id='validation-score-card',
+                                    className="pretty_container two columns"
+                                ),
+                            ],
+                            className='row flex-display'
+                        ),
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
                                         dash_table.DataTable(
                                             id='validation-table',
                                             columns=val_columns,
@@ -72,14 +85,6 @@ layout = html.Div(
                                         ),
                                     ],
                                     className="eight columns"
-                                ),
-                                html.Div(
-                                    [
-                                        html.H3('Validation score'),
-                                        html.H4(id='validation-score'),   
-                                    ],
-                                    id='validation-score-card',
-                                    className="pretty_container"
                                 )
                             ],
                             className="row flex-display",
