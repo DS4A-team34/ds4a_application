@@ -12,15 +12,7 @@ layout = html.Div(
             ],
             className="row flex-display",
         ),
-        html.Div(
-            [
-                html.Div(
-                    [dcc.Graph(id="grupos_contratos_grapsh")],
-                    className="pretty_container twelve columns",
-                ),
-            ],
-            className="row flex-display",
-        ),
+        
         html.Div(
             [
                 html.Div(
@@ -40,6 +32,16 @@ layout = html.Div(
                         )
                     ],
                     className="pretty_container three columns",
+                ),
+            ],
+            className="row flex-display",
+        ),
+        
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="grupos_contratos_grapsh")],
+                    className="pretty_container twelve columns",
                 ),
             ],
             className="row flex-display",
