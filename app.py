@@ -77,7 +77,7 @@ app.layout = html.Div(
             dcc.Tab(label='Explorar', value='graphs'),
             dcc.Tab(label='Procesar', value='contracts'),
             dcc.Tab(label='Validar', value='inspect'),
-            dcc.Tab(label='Identificar Inconsistencias', value='inconsistencias'),
+            dcc.Tab(label='Inconsistencias', value='inconsistencias'),
             # dcc.Tab(label='Gestor de documentos', value='files'),
         ]),
 
